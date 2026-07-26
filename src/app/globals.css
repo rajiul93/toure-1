@@ -1,0 +1,323 @@
+@import "tailwindcss";
+
+:root {
+  /* Light theme only — the site does not support dark mode, so this
+     intentionally ignores the OS/browser `prefers-color-scheme`. */
+  color-scheme: light;
+  --background: #ffffff;
+  --foreground: #171717;
+  --primary: #ff3737;
+  --primary-hover: #e63030;
+  --primary-soft: #fff1f1;
+  --primary-muted: #ffe4e4;
+  --primary-dark: #cc2c2c;
+  --primary-foreground: #ffffff;
+  --secondary: #ff8383;
+  --secondary-hover: #ff7070;
+  --secondary-soft: #fff6f6;
+  --secondary-muted: #ffe8e8;
+  --secondary-dark: #e56f6f;
+  --secondary-foreground: #ffffff;
+  --success: oklch(51.1% 0.096 186.391);
+  --success-hover: oklch(45.5% 0.096 186.391);
+  --success-soft: oklch(96.5% 0.025 186.391);
+  --success-muted: oklch(91% 0.045 186.391);
+  --success-dark: oklch(38% 0.096 186.391);
+  --success-foreground: #ffffff;
+  --heading: #1e2a44;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-muted: var(--primary-muted);
+  --color-primary-dark: var(--primary-dark);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-hover: var(--secondary-hover);
+  --color-secondary-soft: var(--secondary-soft);
+  --color-secondary-muted: var(--secondary-muted);
+  --color-secondary-dark: var(--secondary-dark);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-success: var(--success);
+  --color-success-hover: var(--success-hover);
+  --color-success-soft: var(--success-soft);
+  --color-success-muted: var(--success-muted);
+  --color-success-dark: var(--success-dark);
+  --color-success-foreground: var(--success-foreground);
+  --color-heading: var(--heading);
+  --font-sans: var(--font-manrope);
+  --font-script: var(--font-pinyon-script);
+}
+
+html {
+  /* Always reserve the scrollbar track so page width never shifts when
+     the booking form expands/collapses and crosses the viewport height. */
+  scrollbar-gutter: stable;
+  scroll-behavior: smooth;
+}
+
+body {
+  position: relative;
+  isolation: isolate;
+  background-color: var(--background);
+  color: var(--foreground);
+  overflow-x: hidden;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Cline x1='0' y1='32' x2='32' y2='0' stroke='rgba(255,55,55,0.04)' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  pointer-events: none;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  pointer-events: none;
+}
+
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* The Bokun widget SDK auto-injects a floating "cart" bubble into <body>,
+   separate from our inline calendar. It pops in after their script loads
+   and accounts for nearly all of this page's layout shift; it also
+   duplicates the booking flow we already surface inline, so it's hidden. */
+.bokun-widgets-cart-wrapper {
+  display: none !important;
+}
+
+@keyframes whatsapp-blink {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.45;
+    transform: scale(0.92);
+  }
+}
+
+.whatsapp-blink {
+  animation: whatsapp-blink 1.4s ease-in-out infinite;
+}
+
+@keyframes cta-attention-blink {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgb(255 255 255 / 0.65);
+  }
+
+  50% {
+    opacity: 0.55;
+    transform: scale(0.82);
+    box-shadow: 0 0 0 5px rgb(255 255 255 / 0);
+  }
+}
+
+.cta-attention-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background-color: white;
+  animation: cta-attention-blink 1.25s ease-in-out infinite;
+}
+
+@keyframes booking-load-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.booking-load-pulse {
+  animation: booking-load-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes booking-availability-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.booking-availability-ready {
+  animation: booking-availability-enter 0.35s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .whatsapp-blink {
+    animation: none;
+  }
+
+  .cta-attention-dot {
+    animation: none;
+  }
+
+  .booking-load-pulse {
+    animation: none;
+    opacity: 0.7;
+  }
+
+  .booking-availability-ready {
+    animation: none;
+  }
+
+  .mobile-menu-item {
+    animation: none;
+  }
+}
+
+@keyframes mobile-menu-item-enter {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.mobile-menu-item {
+  animation: mobile-menu-item-enter 0.35s ease-out both;
+}
+
+@keyframes premium-shine {
+  0%,
+  52%,
+  100% {
+    transform: translateX(-150%) skewX(-10deg);
+    opacity: 0;
+  }
+
+  5% {
+    opacity: 0.65;
+  }
+
+  45% {
+    transform: translateX(150%) skewX(-10deg);
+    opacity: 0.65;
+  }
+
+  51% {
+    opacity: 0;
+  }
+}
+
+.premium-shine::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    110deg,
+    transparent 44%,
+    rgba(255, 255, 255, 0.08) 48%,
+    rgba(255, 255, 255, 0.26) 50%,
+    rgba(255, 255, 255, 0.08) 52%,
+    transparent 56%
+  );
+  transform: translateX(-150%) skewX(-10deg);
+  opacity: 0;
+  animation: premium-shine 18s ease-in-out infinite;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.premium-shine::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  z-index: 1;
+  height: 52%;
+  border-radius: inherit;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.14), transparent);
+  pointer-events: none;
+}
+
+.premium-shine:disabled::before {
+  animation: none;
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .premium-shine::before {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+.meeting-map-pin {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Leaflet uses z-index 400–1000 by default, which stacks above sticky nav (z-50). */
+.meeting-point-map .leaflet-pane,
+.meeting-point-map .leaflet-top,
+.meeting-point-map .leaflet-bottom,
+.meeting-point-map .leaflet-control {
+  z-index: 1 !important;
+}
+
+.meeting-point-map .leaflet-overlay-pane {
+  z-index: 2 !important;
+}
+
+.meeting-point-map .leaflet-marker-pane {
+  z-index: 3 !important;
+}
+
+.meeting-point-map .leaflet-tooltip-pane {
+  z-index: 4 !important;
+}
+
+.meeting-point-map .leaflet-popup-pane {
+  z-index: 5 !important;
+}
+
+.meeting-point-map .leaflet-control-container {
+  z-index: 6 !important;
+}

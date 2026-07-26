@@ -1,0 +1,42 @@
+---
+description: Day Tour project overview, stack, structure, and agent guidance
+alwaysApply: true
+---
+
+# Day Tour (`day_tour1`)
+
+Day-tour booking site. Early stage: Bokun widget only; no auth, DB, or API yet.
+
+## Stack
+
+- **Next.js 16** App Router · **React 19** · **TypeScript** · **Tailwind CSS 4**
+- Package manager: **pnpm** (`pnpm dev` / `pnpm build` / `pnpm lint`)
+- Path alias: `@/*` → `./src/*`
+- React Compiler enabled in `next.config.ts` (avoid unnecessary `useMemo`/`useCallback`)
+
+## Structure
+
+```
+src/app/
+  layout.tsx          # Root layout, Geist fonts, metadata
+  globals.css         # Tailwind + CSS variables
+  (public)/
+    layout.tsx        # Public route group wrapper
+    page.tsx          # Home — Bokun booking widget (client)
+```
+
+- Route group `(public)` does not change URLs (`/` = home).
+- Put future private/admin routes in new groups, e.g. `(auth)`, `(admin)`.
+
+## Current product
+
+- Home loads Bokun Widgets Loader with booking channel UUID in `src/app/(public)/page.tsx`.
+- Prefer `next/script` (public API), not `next/dist/client/script`.
+- Keep secrets and channel IDs in env vars when adding more integrations.
+
+## Conventions
+
+- Prefer Server Components; add `'use client'` only when needed.
+- Match existing Tailwind utility style; theme tokens live in `globals.css`.
+- Do not invent auth/DB/payment layers unless the user asks.
+- Update this rule when routes, domains, or stack change.
