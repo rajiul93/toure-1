@@ -1,13 +1,14 @@
 'use client';
 
-import {
-  IconCheck,
-  IconChevronUp,
-  IconSpinner,
-  IconX,
-} from '@/components/icons';
+import { IconCheck, IconChevronUp, IconX } from '@/components/icons';
+import AvailabilityControl from './availability-control';
 import { LOUVRE_TOUR } from '@/lib/tour-schema';
 import { SITE } from '@/lib/site-config';
+import {
+  startBokunCalendarWatch,
+  type BokunCalendarPhase,
+  type BokunFailureCause,
+} from '@/lib/bokun-ready';
 import {
   BOOKING_OPEN_EVENT,
   openBookingCalendar,
@@ -15,102 +16,10 @@ import {
 import Script from 'next/script';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { BsWhatsapp } from 'react-icons/bs';
-import { FaCalendarDays, FaLock, FaStar } from 'react-icons/fa6';
+import { FaLock, FaStar } from 'react-icons/fa6';
 
 const DESKTOP_MIN_WIDTH = 1024;
-const CALENDAR_MIN_IFRAME_HEIGHT = 260;
-const CALENDAR_STABLE_MS = 700;
-const CALENDAR_POLL_MS = 150;
 
-type BokunWindow = Window & {
-  BokunWidgetsLoader?: {
-    loadWidgets?: () => void;
-    init?: () => void;
-  };
-};
-
-function requestBokunWidgetScan() {
-  const loader = (window as BokunWindow).BokunWidgetsLoader;
-  loader?.loadWidgets?.();
-  loader?.init?.();
-}
-
-function getCalendarIframe(container: HTMLElement) {
-  return container.querySelector('iframe');
-}
-
-function waitForStableCalendar(
-  widget: HTMLElement,
-  onReady: () => void,
-  isCancelled: () => boolean,
-) {
-  let lastHeight = 0;
-  let stableSince = 0;
-  let iframeLoaded = false;
-
-  const finishIfStable = () => {
-    const iframe = getCalendarIframe(widget);
-    if (!iframe) return;
-
-    if (
-      !iframeLoaded &&
-      iframe.getAttribute('src') &&
-      iframe.offsetHeight >= CALENDAR_MIN_IFRAME_HEIGHT
-    ) {
-      iframeLoaded = true;
-    }
-
-    if (!iframeLoaded) return;
-
-    const height = iframe.offsetHeight;
-    const now = performance.now();
-
-    if (height < CALENDAR_MIN_IFRAME_HEIGHT) {
-      lastHeight = 0;
-      stableSince = 0;
-      return;
-    }
-
-    if (height === lastHeight) {
-      if (stableSince === 0) stableSince = now;
-      if (now - stableSince >= CALENDAR_STABLE_MS) {
-        onReady();
-      }
-      return;
-    }
-
-    lastHeight = height;
-    stableSince = 0;
-  };
-
-  const attachIframeLoad = (iframe: HTMLIFrameElement) => {
-    if (iframe.dataset.preloadBound === '1') return;
-    iframe.dataset.preloadBound = '1';
-
-    iframe.addEventListener(
-      'load',
-      () => {
-        iframeLoaded = true;
-        finishIfStable();
-      },
-      { once: true },
-    );
-  };
-
-  const poll = () => {
-    if (isCancelled()) return;
-
-    const iframe = getCalendarIframe(widget);
-    if (iframe) attachIframeLoad(iframe);
-
-    finishIfStable();
-  };
-
-  poll();
-  const pollId = window.setInterval(poll, CALENDAR_POLL_MS);
-
-  return () => window.clearInterval(pollId);
-}
 
 const TRUST_BADGES = [
   {
@@ -129,98 +38,20 @@ const TRUST_BADGES = [
 
 const FEATURES = SITE.booking.features;
 
-function StatusBanner() {
-  return (
-    <div className="flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2.5 text-xs font-medium text-emerald-800">
-      <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
-        <IconCheck className="size-3" />
-      </span>
-      Live calendar ready — policy shown before payment
-    </div>
-  );
-}
-
-const availabilityButtonClassName =
-  'premium-shine relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-primary px-4 py-3.5 text-sm font-extrabold subpixel-antialiased text-primary-foreground shadow-sm transition hover:bg-primary-hover';
-
-function AvailabilityLoadingBlock({ compact = false }: { compact?: boolean }) {
-  if (compact) {
-    return (
-      <div
-        className="booking-availability-loading flex w-full items-center justify-center gap-2 rounded-2xl border border-zinc-200/80 bg-zinc-50 px-4 py-3.5 text-sm font-semibold text-zinc-600"
-        aria-busy
-        aria-live="polite"
-      >
-        <IconSpinner />
-        Loading live calendar…
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className="booking-availability-loading relative z-10 overflow-hidden rounded-2xl border border-primary/20 shadow-sm"
-      aria-busy
-      aria-live="polite"
-    >
-      <div className="flex items-center justify-center gap-2 bg-primary px-4 py-3.5 text-sm font-extrabold text-primary-foreground">
-        <IconSpinner />
-        Processing…
-      </div>
-      <div className="flex items-center gap-2 border-t border-zinc-200/70 bg-zinc-50 px-3 py-2.5 text-xs font-medium text-zinc-500">
-        <span className="booking-load-pulse size-2 shrink-0 rounded-full bg-zinc-400" aria-hidden="true" />
-        Loading live calendar…
-      </div>
-    </div>
-  );
-}
-
-function AvailabilityReadyButton({
-  onClick,
-  className,
-}: {
-  onClick: () => void;
-  className: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={className}
-      aria-expanded={false}
-    >
-      <span className="relative z-10 inline-flex items-center justify-center gap-2">
-        <FaCalendarDays className="size-5" aria-hidden="true" />
-        Check live availability
-      </span>
-      <CtaAttentionDot />
-    </button>
-  );
-}
-
-function CtaAttentionDot() {
-  return (
-    <span
-      className="cta-attention-dot pointer-events-none absolute right-4 top-1/2 z-20 -translate-y-1/2"
-      aria-hidden="true"
-    />
-  );
-}
-
 export default function BookingForm({
   onExpandedChange,
 }: {
   onExpandedChange?: (expanded: boolean) => void;
 }) {
   const [loaderReady, setLoaderReady] = useState(false);
-  const [calendarReady, setCalendarReady] = useState(false);
+  const [phase, setPhase] = useState<BokunCalendarPhase>('idle');
+  const [failure, setFailure] = useState<BokunFailureCause | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [showStickyBar, setShowStickyBar] = useState(false);
   const ctaRef = useRef<HTMLDivElement>(null);
   const widgetRef = useRef<HTMLDivElement>(null);
   const pendingOpenRef = useRef(false);
-  const calendarReadyRef = useRef(false);
-  const ready = calendarReady;
+  const ready = phase === 'ready';
 
   const setOpen = (next: boolean) => {
     onExpandedChange?.(next);
@@ -241,41 +72,34 @@ export default function BookingForm({
   };
 
   useEffect(() => {
-    if (!loaderReady || calendarReadyRef.current) return;
+    if (!loaderReady) return;
 
-    requestBokunWidgetScan();
+    const container = widgetRef.current;
+    if (!container) return;
 
-    const widget = widgetRef.current;
-    if (!widget) return;
+    setFailure(null);
 
-    let cancelled = false;
-
-    const markReady = () => {
-      if (cancelled || calendarReadyRef.current) return;
-      calendarReadyRef.current = true;
-      setCalendarReady(true);
-    };
-
-    const stopStabilityWatch = waitForStableCalendar(
-      widget,
-      markReady,
-      () => cancelled || calendarReadyRef.current,
-    );
-
-    const observer = new MutationObserver(() => {
-      requestBokunWidgetScan();
+    const handle = startBokunCalendarWatch({
+      container,
+      onPhase: (event) => {
+        setPhase(event.phase);
+        if (event.phase === 'failed') setFailure(event.cause);
+      },
     });
-    observer.observe(widget, { childList: true, subtree: true });
 
-    const fallbackId = window.setTimeout(markReady, 25000);
-
-    return () => {
-      cancelled = true;
-      stopStabilityWatch();
-      observer.disconnect();
-      window.clearTimeout(fallbackId);
-    };
+    return () => handle.stop();
   }, [loaderReady]);
+
+  /**
+   * A full reload, deliberately. Re-mounting the widget node and re-running
+   * Bókun's `initializeBokunWidgets()` does produce a fresh iframe, but that
+   * re-initialized embed never posts the messages the calendar normally sends,
+   * so it can't be confirmed working — the user would just wait out another
+   * timeout. A reload always recovers.
+   */
+  const retryCalendar = useCallback(() => {
+    window.location.reload();
+  }, []);
 
   useEffect(() => {
     if (ready && pendingOpenRef.current) {
@@ -336,6 +160,10 @@ export default function BookingForm({
         src={SITE.bokun.loaderUrl}
         strategy="lazyOnload"
         onReady={() => setLoaderReady(true)}
+        onError={() => {
+          setPhase('failed');
+          setFailure('loader-error');
+        }}
       />
 
       {!expanded && (
@@ -393,26 +221,26 @@ export default function BookingForm({
             Close availability
             <IconChevronUp className="size-4" />
           </button>
-        ) : ready ? (
-          <div className="booking-availability-ready relative z-10 space-y-2">
-            <AvailabilityReadyButton
-              onClick={() => setOpen(true)}
-              className={availabilityButtonClassName}
-            />
-            <StatusBanner />
-          </div>
         ) : (
-          <AvailabilityLoadingBlock />
+          <AvailabilityControl
+            phase={phase}
+            failure={failure}
+            announce
+            onOpen={() => setOpen(true)}
+            onRetry={retryCalendar}
+          />
         )}
 
-        {/* Preload off-screen with real dimensions; reveal instantly once expanded */}
+        {/* Preloads at real size while collapsed — clipped rather than moved
+            off-screen, so the iframe keeps painting at its normal position. */}
         <div
           className={
             expanded
-              ? 'relative z-0 max-h-[min(70vh,640px)] overflow-y-auto overscroll-contain opacity-100'
-              : 'pointer-events-none absolute left-0 right-0 top-0 z-0 h-[min(640px,70vh)] overflow-hidden translate-x-[-200vw]'
+              ? 'relative z-0 max-h-[min(70vh,640px)] overflow-y-auto overscroll-contain opacity-100 [clip-path:none] [-webkit-clip-path:none]'
+              : 'pointer-events-none absolute left-0 right-0 top-0 z-0 h-[min(640px,70vh)] overflow-hidden opacity-0 [clip-path:inset(0_0_100%_0)] [-webkit-clip-path:inset(0_0_100%_0)]'
           }
           aria-hidden={!expanded}
+          inert={!expanded}
         >
           <div
             ref={widgetRef}
@@ -456,14 +284,13 @@ export default function BookingForm({
             <BsWhatsapp className="size-5" aria-hidden="true" />
           </a>
           <div className="min-w-0 flex-1">
-            {ready ? (
-              <AvailabilityReadyButton
-                onClick={openFromSticky}
-                className={availabilityButtonClassName}
-              />
-            ) : (
-              <AvailabilityLoadingBlock compact />
-            )}
+            <AvailabilityControl
+              phase={phase}
+              failure={failure}
+              compact
+              onOpen={openFromSticky}
+              onRetry={retryCalendar}
+            />
           </div>
         </div>
       </div>
