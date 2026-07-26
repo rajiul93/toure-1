@@ -10,7 +10,7 @@ export const LOUVRE_TOUR = {
   shortDescription: SITE.tagline,
   price: 32,
   priceCurrency: 'EUR' as const,
-  priceLabel: '€32',
+  priceLabel: '€57',
   rating: 4.2,
   reviewCount: 9594,
   reviewCountLabel: '9,594',
