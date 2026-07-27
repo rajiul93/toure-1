@@ -1,16 +1,16 @@
 import type { BlogPostListResult } from '@/lib/blog-posts'
-import axios from 'axios'
 
 export async function fetchBlogPosts(params: {
   search: string
   page: number
 }): Promise<BlogPostListResult> {
-  const { data } = await axios.get<BlogPostListResult>('/api/blog', {
-    params: {
-      page: params.page,
-      ...(params.search ? { search: params.search } : {}),
-    },
-  })
+  const query = new URLSearchParams({ page: String(params.page) })
+  if (params.search) query.set('search', params.search)
 
-  return data
+  const response = await fetch(`/api/blog?${query.toString()}`)
+  if (!response.ok) {
+    throw new Error('Failed to load blog posts')
+  }
+
+  return response.json() as Promise<BlogPostListResult>
 }

@@ -34,6 +34,9 @@ export async function uploadObjectToR2(params: {
       Body: params.body,
       ContentType: params.mimeType,
       CacheControl: 'public, max-age=31536000, immutable',
+      Metadata: {
+        'x-content-type-options': 'nosniff',
+      },
     }),
   )
 }

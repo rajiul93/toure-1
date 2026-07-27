@@ -1,4 +1,5 @@
 import ReviewsPageContent from './reviews-page-content'
+import ReviewsStructuredData from '@/components/reviews/reviews-structured-data'
 import { createSeoPageMetadata } from '@/lib/metadata'
 import type { Metadata } from 'next'
 
@@ -7,5 +8,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function ReviewsPage() {
-  return <ReviewsPageContent />
+  return (
+    <>
+      <ReviewsStructuredData />
+      <ReviewsPageContent />
+    </>
+  )
 }

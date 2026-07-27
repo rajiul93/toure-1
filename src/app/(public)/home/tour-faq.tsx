@@ -1,10 +1,6 @@
-'use client'
+import type { ResolvedTourConfig } from '@/lib/tour-config.types'
 
-import { useTourConfig } from '@/components/tour-config/tour-config-provider'
-
-export default function TourFaq() {
-  const { faqs } = useTourConfig()
-
+export default function TourFaq({ faqs }: { faqs: ResolvedTourConfig['faqs'] }) {
   return (
     <section
       id="faq"

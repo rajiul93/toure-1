@@ -1,7 +1,5 @@
-'use client'
-
 import { IconStar } from '@/components/icons'
-import { useTourConfig } from '@/components/tour-config/tour-config-provider'
+import type { ResolvedTourConfig } from '@/lib/tour-config.types'
 import {
   FaClock,
   FaHeadphones,
@@ -87,8 +85,11 @@ const FEATURES = [
   },
 ] as const
 
-export default function ProductIntro() {
-  const { louvreTour } = useTourConfig()
+export default function ProductIntro({
+  louvreTour,
+}: {
+  louvreTour: ResolvedTourConfig['louvreTour']
+}) {
 
   return (
     <section className="py-4 sm:py-5" aria-labelledby="product-title">

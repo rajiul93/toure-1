@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { buildSecurityHeaders } from "./src/lib/security-headers";
 
 function getR2ImageRemotePattern() {
   const publicUrl = process.env.R2_PUBLIC_URL?.trim();
@@ -23,11 +24,20 @@ const r2ImageRemotePattern = getR2ImageRemotePattern();
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
+  experimental: {
+    optimizePackageImports: ['react-icons', 'framer-motion'],
+  },
   images: {
+    formats: ['image/avif', 'image/webp'],
     remotePatterns: r2ImageRemotePattern ? [r2ImageRemotePattern] : [],
   },
   async headers() {
     return [
+      {
+        // Security headers on every response.
+        source: "/:path*",
+        headers: buildSecurityHeaders(),
+      },
       {
         // Banner photos are static and filenames don't change on edits, so
         // browsers can reuse them from cache indefinitely after first load

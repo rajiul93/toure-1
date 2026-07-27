@@ -12,6 +12,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Prisma's generated client is machine-written and was contributing
+    // ~2,280 of the ~2,293 reported problems, burying every real finding.
+    "generated/**",
+    "prisma/generated/**",
+    "src/generated/**",
+    "coverage/**",
   ]),
 ]);
 

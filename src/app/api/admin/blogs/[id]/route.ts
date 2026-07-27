@@ -1,16 +1,19 @@
 import { jsonError, requireTeamRoleApi } from '@/lib/auth/require-role-api'
+import { revalidateBlogPaths } from '@/lib/blog-revalidation'
 import { getBlogFromDB, softDeleteBlogInDB, updateBlogInDB } from '@/lib/services/blog.service'
 import { blogFormSchema } from '@/lib/validations/blog-form.validation'
 import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
+const ADMIN_ROLES = ['admin'] as const
+
 type RouteContext = {
   params: Promise<{ id: string }>
 }
 
 export async function GET(_request: NextRequest, context: RouteContext) {
-  const authResult = await requireTeamRoleApi(['admin', 'manager', 'marketer'])
+  const authResult = await requireTeamRoleApi([...ADMIN_ROLES])
   if ('error' in authResult) return authResult.error
 
   const { id } = await context.params
@@ -30,12 +33,18 @@ export async function GET(_request: NextRequest, context: RouteContext) {
 }
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
-  const authResult = await requireTeamRoleApi(['admin', 'manager', 'marketer'])
+  const authResult = await requireTeamRoleApi([...ADMIN_ROLES])
   if ('error' in authResult) return authResult.error
 
   const { id } = await context.params
 
   try {
+    const existing = await getBlogFromDB(id)
+    if (!existing?.form) {
+      return jsonError('Blog not found', 404)
+    }
+
+    const previousSlug = existing.form.basic_info.slug
     const body = await request.json()
     const parsed = blogFormSchema.safeParse(body)
 
@@ -44,6 +53,10 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     }
 
     const blog = await updateBlogInDB(id, parsed.data)
+    revalidateBlogPaths({
+      slug: parsed.data.basic_info.slug,
+      previousSlug,
+    })
     return NextResponse.json({ blog })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to update blog'
@@ -57,13 +70,20 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 }
 
 export async function DELETE(_request: NextRequest, context: RouteContext) {
-  const authResult = await requireTeamRoleApi(['admin', 'manager', 'marketer'])
+  const authResult = await requireTeamRoleApi([...ADMIN_ROLES])
   if ('error' in authResult) return authResult.error
 
   const { id } = await context.params
 
   try {
+    const existing = await getBlogFromDB(id)
+    if (!existing?.form) {
+      return jsonError('Blog not found', 404)
+    }
+
+    const slug = existing.form.basic_info.slug
     await softDeleteBlogInDB(id)
+    revalidateBlogPaths({ slug })
     return NextResponse.json({ deleted: true })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to delete blog'

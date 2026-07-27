@@ -1,4 +1,5 @@
 import { deleteObjectFromR2, uploadObjectToR2 } from '@/lib/r2/client'
+import { assertImageBuffer } from '@/lib/image-sniff'
 import {
   getPublicObjectUrl,
   IMAGE_UPLOAD,
@@ -136,11 +137,12 @@ export async function uploadImageToR2AndDB(params: {
 
   const key = buildObjectKey(params.file.name)
   const body = await fileToBuffer(params.file)
+  const mimeType = assertImageBuffer(new Uint8Array(body), params.file.type)
 
   await uploadObjectToR2({
     key,
     body,
-    mimeType: params.file.type,
+    mimeType,
   })
 
   const image = await prisma.image.create({
@@ -148,7 +150,7 @@ export async function uploadImageToR2AndDB(params: {
       key,
       url: getPublicObjectUrl(key),
       filename: params.file.name,
-      mimeType: params.file.type,
+      mimeType,
       size: params.file.size,
       alt: params.alt?.trim() || null,
       uploadedBy: params.uploadedBy,
@@ -207,11 +209,12 @@ export async function updateImageInR2AndDB(params: {
 
   const nextKey = buildObjectKey(params.file.name)
   const body = await fileToBuffer(params.file)
+  const mimeType = assertImageBuffer(new Uint8Array(body), params.file.type)
 
   await uploadObjectToR2({
     key: nextKey,
     body,
-    mimeType: params.file.type,
+    mimeType,
   })
 
   const updated = await prisma.image.update({
@@ -220,7 +223,7 @@ export async function updateImageInR2AndDB(params: {
       key: nextKey,
       url: getPublicObjectUrl(nextKey),
       filename: params.file.name,
-      mimeType: params.file.type,
+      mimeType,
       size: params.file.size,
       alt,
     },

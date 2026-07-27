@@ -20,12 +20,22 @@ export default async function BlogArticleStructuredData({
   const [site, seo] = await Promise.all([getSiteConfigFromDB(), getSiteSeoFromDB()])
   const siteUrl = getSiteUrl()
   const pageUrl = `${siteUrl}/blog/${blog.slug}`
-  const imageUrl = absoluteAssetUrl(blog.featuredImageUrl, siteUrl)
+  const ogImagePath =
+    blog.fbMetaImageUrl || blog.metaImageUrl || blog.featuredImageUrl
+  const imageUrl = absoluteAssetUrl(ogImagePath, siteUrl)
   const orgLogoUrl = seo.organization.logo.url
     ? absoluteAssetUrl(seo.organization.logo.url, siteUrl)
     : imageUrl
 
   const graph: Record<string, unknown>[] = [
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl },
+        { '@type': 'ListItem', position: 2, name: 'Blog', item: `${siteUrl}/blog` },
+        { '@type': 'ListItem', position: 3, name: blog.title, item: pageUrl },
+      ],
+    },
     {
       '@type': 'BlogPosting',
       '@id': `${pageUrl}#article`,

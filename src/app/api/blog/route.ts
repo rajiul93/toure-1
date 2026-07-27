@@ -1,3 +1,4 @@
+import { enforceApiRateLimit } from '@/lib/api-rate-limit'
 import { listMockBlogPosts } from '@/lib/blog-posts'
 import {
   countPublishedBlogsInDB,
@@ -9,6 +10,13 @@ import { NextRequest, NextResponse } from 'next/server'
 export type { BlogPostListItem, BlogPostListResult } from '@/lib/blog-posts'
 
 export async function GET(request: NextRequest) {
+  const limited = enforceApiRateLimit(request, {
+    scope: 'public-blog',
+    limit: 120,
+    windowMs: 60_000,
+  })
+  if (limited) return limited
+
   const parsed = publicBlogListQuerySchema.safeParse(
     Object.fromEntries(request.nextUrl.searchParams.entries()),
   )

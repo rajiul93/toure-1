@@ -1,6 +1,7 @@
 'use client'
 
 import {
+  getVisibleBookingTarget,
   markBookingOpenForNavigation,
   openBookingCalendar,
 } from '@/lib/open-booking'
@@ -30,7 +31,9 @@ export default function BookNowLink({
 
         event.preventDefault()
 
-        if (document.getElementById('book')) {
+        // Must be *visible*, not merely present: the sidebar stays mounted but
+        // hidden on /about-us and /legal/*, where booking must navigate home.
+        if (getVisibleBookingTarget()) {
           openBookingCalendar()
           window.history.pushState(null, '', `${pathname}#book`)
           return

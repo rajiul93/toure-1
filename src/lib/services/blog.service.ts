@@ -1,4 +1,5 @@
 import { dayjs, parseInputDate } from '@/lib/dayjs'
+import { sanitizeBlogHtml } from '@/lib/blog-article-html'
 import { repairBlogRecordInDBIfNeeded } from '@/lib/blog-html-repair'
 import { prisma } from '@/lib/db'
 import { registerImageUsageInDB } from '@/lib/services/image.service'
@@ -30,7 +31,7 @@ function mapFormToBlogFields(values: BlogFormValues): Omit<Prisma.BlogCreateInpu
     title: values.basic_info.title,
     slug: values.basic_info.slug,
     shortDescription: values.basic_info.short_description,
-    description: values.basic_info.description,
+    description: sanitizeBlogHtml(values.basic_info.description),
     featuredImageUrl: values.basic_info.featured_image.url,
     featuredImageAlt: values.basic_info.featured_image.alt_text,
     isFeatured: values.basic_info.is_featured,
@@ -48,7 +49,7 @@ function mapFormToBlogFields(values: BlogFormValues): Omit<Prisma.BlogCreateInpu
 function mapFaqsToCreate(values: BlogFormValues) {
   return values.faqs.map((faq, index) => ({
     question: faq.question,
-    answer: faq.answer,
+    answer: sanitizeBlogHtml(faq.answer),
     sortOrder: index,
   }))
 }

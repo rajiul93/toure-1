@@ -1,7 +1,6 @@
+import { enforceApiRateLimit } from '@/lib/api-rate-limit'
 import { jsonError, requireTeamRoleApi } from '@/lib/auth/require-role-api'
 import {
-  deleteImageFromR2AndDB,
-  getImageFromDB,
   listImagesFromDB,
   uploadImageToR2AndDB,
 } from '@/lib/services/image.service'
@@ -32,6 +31,13 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const limited = enforceApiRateLimit(request, {
+    scope: 'image-upload',
+    limit: 30,
+    windowMs: 60_000,
+  })
+  if (limited) return limited
+
   const authResult = await requireTeamRoleApi()
   if ('error' in authResult) return authResult.error
 

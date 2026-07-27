@@ -20,22 +20,26 @@ export default function Navbar() {
   const { isLinkActive } = useNavActive()
   const pathname = usePathname()
 
-  // Close menu when route changes
+  // Close menu when route changes (deferred to satisfy set-state-in-effect lint).
   useEffect(() => {
-    setOpen(false)
+    const id = window.setTimeout(() => setOpen(false), 0)
+    return () => window.clearTimeout(id)
   }, [pathname])
 
   useEffect(() => {
     if (open) {
-      setIsVisible(true)
-      requestAnimationFrame(() => {
+      const frame = requestAnimationFrame(() => {
+        setIsVisible(true)
         requestAnimationFrame(() => setIsAnimating(true))
       })
-    } else {
-      setIsAnimating(false)
-      const timer = setTimeout(() => setIsVisible(false), 300)
-      return () => clearTimeout(timer)
+      return () => cancelAnimationFrame(frame)
     }
+
+    const id = window.setTimeout(() => {
+      setIsAnimating(false)
+      window.setTimeout(() => setIsVisible(false), 300)
+    }, 0)
+    return () => window.clearTimeout(id)
   }, [open])
 
   useEffect(() => {

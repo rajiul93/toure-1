@@ -1,19 +1,13 @@
 import { createNeonAuth } from '@neondatabase/auth/next/server'
+import { resolveAuthEnv } from '@/lib/auth/auth-env'
 
-const baseUrl = process.env.NEON_AUTH_BASE_URL
-const cookieSecret = process.env.NEON_AUTH_COOKIE_SECRET
-
-if (!baseUrl || !cookieSecret) {
-  console.warn(
-    '[auth] NEON_AUTH_BASE_URL and NEON_AUTH_COOKIE_SECRET are required at runtime.',
-  )
-}
+// Throws if the auth environment is missing or weak. See auth-env.ts for why
+// there is deliberately no fallback.
+const { baseUrl, cookieSecret } = resolveAuthEnv()
 
 export const auth = createNeonAuth({
-  baseUrl: baseUrl ?? 'https://placeholder.neonauth.local/auth',
+  baseUrl,
   cookies: {
-    secret:
-      cookieSecret ??
-      'development-placeholder-secret-minimum-32-characters',
+    secret: cookieSecret,
   },
 })

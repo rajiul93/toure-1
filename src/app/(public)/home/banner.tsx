@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { useTourConfig } from '@/components/tour-config/tour-config-provider'
+import type { BannerPhoto } from '@/lib/tour-config.types'
 import BannerSlider from './banner-slider'
 
 function PhotoBadge({ label }: { label: string }) {
@@ -24,7 +24,7 @@ function PhotoCountBadge({ className = '' }: { className?: string }) {
   )
 }
 
-function BannerTablet({ bannerPhotos }: { bannerPhotos: ReturnType<typeof useTourConfig>['bannerPhotos'] }) {
+function BannerTablet({ bannerPhotos }: { bannerPhotos: BannerPhoto[] }) {
   const [featured, second, third] = bannerPhotos
 
   return (
@@ -68,7 +68,7 @@ function BannerTablet({ bannerPhotos }: { bannerPhotos: ReturnType<typeof useTou
   )
 }
 
-function BannerGrid({ bannerPhotos }: { bannerPhotos: ReturnType<typeof useTourConfig>['bannerPhotos'] }) {
+function BannerGrid({ bannerPhotos }: { bannerPhotos: BannerPhoto[] }) {
   const [featured, ...tiles] = bannerPhotos
 
   return (
@@ -105,8 +105,7 @@ function BannerGrid({ bannerPhotos }: { bannerPhotos: ReturnType<typeof useTourC
   )
 }
 
-export default function Banner() {
-  const { bannerPhotos } = useTourConfig()
+export default function Banner({ bannerPhotos }: { bannerPhotos: BannerPhoto[] }) {
 
   return (
     <section className="h-full w-full min-h-0" aria-label="Photo gallery">

@@ -1,5 +1,6 @@
 import { auth } from '@/lib/auth/server'
 import { isAppRole, ROLES } from '@/lib/auth/roles'
+import { decideProxyAction } from '@/lib/auth/proxy-policy'
 import { NextResponse, type NextRequest } from 'next/server'
 
 const authMiddleware = auth.middleware({ loginUrl: '/auth/sign-in' })
@@ -10,11 +11,6 @@ function isServerActionRequest(request: NextRequest) {
     request.headers.has('RSC') ||
     request.headers.get('Accept')?.includes('text/x-component') === true
   )
-}
-
-function isProtectedTeamApi(request: NextRequest) {
-  const pathname = request.nextUrl.pathname
-  return pathname.startsWith('/api/images') || pathname.startsWith('/api/admin/')
 }
 
 async function rejectUnauthenticatedTeamApi() {
@@ -33,13 +29,18 @@ async function rejectUnauthenticatedTeamApi() {
 }
 
 export default async function proxy(request: NextRequest) {
-  if (isServerActionRequest(request)) {
+  const decision = decideProxyAction(
+    request.nextUrl.pathname,
+    isServerActionRequest(request),
+  )
+
+  if (decision === 'enforce-team-api') {
+    const rejection = await rejectUnauthenticatedTeamApi()
+    if (rejection) return rejection
     return NextResponse.next()
   }
 
-  if (isProtectedTeamApi(request)) {
-    const rejection = await rejectUnauthenticatedTeamApi()
-    if (rejection) return rejection
+  if (decision === 'passthrough-rsc') {
     return NextResponse.next()
   }
 
@@ -51,15 +52,11 @@ export const config = {
     '/admin/:path*',
     '/manager/:path*',
     '/marketer/:path*',
-    '/api/images',
+    // Prefix matchers rather than one entry per route, so a newly added
+    // /api/admin/* endpoint is covered by the proxy automatically.
     '/api/images/:path*',
-    '/api/admin/blogs',
-    '/api/admin/blogs/:path*',
-    '/api/admin/site-config',
-    '/api/admin/site-config/:path*',
-    '/api/admin/tour-config',
-    '/api/admin/tour-config/:path*',
-    '/api/admin/site-seo',
-    '/api/admin/site-seo/:path*',
+    '/api/images',
+    '/api/admin/:path*',
+    '/api/admin',
   ],
 }

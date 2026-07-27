@@ -1,7 +1,7 @@
 'use client'
 
 import { IconChevronDown } from '@/components/icons'
-import { useTourConfig } from '@/components/tour-config/tour-config-provider'
+import type { ResolvedTourConfig } from '@/lib/tour-config.types'
 import { useId, useRef, useState } from 'react'
 
 function AccordionItem({
@@ -71,8 +71,11 @@ function AccordionItem({
   )
 }
 
-export default function TourImportantInfo() {
-  const { importantInfo } = useTourConfig()
+export default function TourImportantInfo({
+  importantInfo,
+}: {
+  importantInfo: ResolvedTourConfig['importantInfo']
+}) {
 
   return (
     <section

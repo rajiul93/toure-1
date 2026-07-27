@@ -7,7 +7,7 @@ import {
 } from '@/components/icons'
 import ReviewFilterChips from '@/components/review-filter-chips'
 import ReviewStars from '@/components/review-stars'
-import { useTourConfig } from '@/components/tour-config/tour-config-provider'
+import type { ResolvedTourConfig } from '@/lib/tour-config.types'
 import { FILTER_TAGS, REVIEWS, type FilterId } from '@/lib/reviews-data'
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -73,8 +73,11 @@ function useScrollEdges(
   return edges
 }
 
-export default function TravelerReviews() {
-  const { louvreTour } = useTourConfig()
+export default function TravelerReviews({
+  louvreTour,
+}: {
+  louvreTour: ResolvedTourConfig['louvreTour']
+}) {
   const rating = louvreTour.rating
   const reviewCount = louvreTour.reviewCountLabel
   const [activeFilter, setActiveFilter] = useState<FilterId>('all')

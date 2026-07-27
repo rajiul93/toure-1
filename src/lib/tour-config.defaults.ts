@@ -112,22 +112,22 @@ export function getDefaultTourSettingsInput(): TourSettingsInput {
         label: 'Louvre Pyramid',
       },
       {
-        url: '/images/banner/1.jpeg',
+        url: '/images/banner/1.webp',
         alt_text: 'Grande Galerie',
         label: 'Grande Galerie',
       },
       {
-        url: '/images/banner/2.jpeg',
+        url: '/images/banner/2.webp',
         alt_text: 'Denon Wing',
         label: 'Denon Wing',
       },
       {
-        url: '/images/banner/3.jpeg',
+        url: '/images/banner/3.webp',
         alt_text: 'Audio Guide',
         label: 'Audio Guide',
       },
       {
-        url: '/images/banner/4.jpeg',
+        url: '/images/banner/4.webp',
         alt_text: 'Night Entry',
         label: 'Night Entry',
       },

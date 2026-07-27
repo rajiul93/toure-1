@@ -2,7 +2,7 @@ import SignInForm from '@/app/auth/sign-in/sign-in-form'
 import { IconLock } from '@/components/icons'
 import { auth } from '@/lib/auth/server'
 import { getRoleHome, isAppRole } from '@/lib/auth/roles'
-import { createPageMetadata } from '@/lib/metadata'
+import { createPrivatePageMetadata } from '@/lib/metadata'
 import { getSiteConfigFromDB } from '@/lib/services/site-settings.service'
 import { getTourConfigFromDB } from '@/lib/services/tour-settings.service'
 import Image from 'next/image'
@@ -48,7 +48,7 @@ function DesktopHeroContent({
   )
 }
 
-export const metadata = createPageMetadata({
+export const metadata = createPrivatePageMetadata({
   title: 'Sign in',
   description: 'Sign in to the Day Tour Paris team dashboard.',
   path: '/auth/sign-in',

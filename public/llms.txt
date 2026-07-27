@@ -6,7 +6,7 @@
 
 - Brand: Day Tour Paris
 - Destination: Louvre Museum, Paris, France
-- Price: from €32 per person
+- Price: from €32 per person (see live checkout for current rate)
 - Rating: 4.2 out of 5 (9,594 reviews)
 - Duration: approx. 2.5–3 hours self-guided visit
 - Support: WhatsApp (number configured in site env)
@@ -18,6 +18,9 @@
 - /blog — Louvre travel tips and planning articles
 - /reviews — Filterable traveler reviews
 - /attraction-tours — Paris museum tour listings (Louvre featured)
+- /legal/privacy — Privacy policy
+- /legal/terms — Terms and conditions
+- /legal/cancellation — Cancellation and refund policy
 
 ## Topics covered
 

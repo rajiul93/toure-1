@@ -3,6 +3,7 @@
 import BlogSearchBar from '@/components/blog/blog-search-bar'
 import { formatBlogDisplayDate } from '@/lib/dayjs'
 import { fetchBlogPosts } from '@/lib/blog-api'
+import type { BlogPostListResult } from '@/lib/blog-posts'
 import { SITE } from '@/lib/site-config'
 import { useBlogSearchStore } from '@/store/blog-search-store'
 import { useQuery } from '@tanstack/react-query'
@@ -10,11 +11,16 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useState } from 'react'
 
-export default function BlogPageContent() {
+type BlogPageContentProps = {
+  initialData: BlogPostListResult
+}
+
+export default function BlogPageContent({ initialData }: BlogPageContentProps) {
   const debouncedQuery = useBlogSearchStore((state) => state.debouncedQuery)
   const [pagination, setPagination] = useState({ query: debouncedQuery, page: 1 })
 
   const page = pagination.query === debouncedQuery ? pagination.page : 1
+  const isInitialView = debouncedQuery === '' && page === 1
 
   function setPage(next: number | ((current: number) => number)) {
     setPagination((current) => {
@@ -28,6 +34,8 @@ export default function BlogPageContent() {
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ['blog-posts', debouncedQuery, page],
     queryFn: () => fetchBlogPosts({ search: debouncedQuery, page }),
+    initialData: isInitialView ? initialData : undefined,
+    placeholderData: (previous) => previous,
   })
 
   const posts = data?.posts ?? []
@@ -70,7 +78,7 @@ export default function BlogPageContent() {
                     <div className="relative aspect-[16/10] overflow-hidden rounded-lg bg-zinc-100">
                       <Image
                         src={post.image}
-                        alt=""
+                        alt={post.title}
                         fill
                         className="object-cover transition duration-500 group-hover:scale-105"
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"

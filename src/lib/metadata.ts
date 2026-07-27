@@ -223,3 +223,19 @@ const defaultSeo = resolveSiteSeoConfig(getDefaultSiteSeoSettingsInput())
 export function createPageMetadata(options: BuildPageMetadataOptions): Metadata {
   return buildPageMetadata(defaultSeo, SITE.brand.full, options)
 }
+
+/** Auth and dashboard routes — never index even if global robots allow. */
+export function createPrivatePageMetadata(options: BuildPageMetadataOptions): Metadata {
+  const base = buildPageMetadata(defaultSeo, SITE.brand.full, options)
+  return {
+    ...base,
+    robots: { index: false, follow: false },
+  }
+}
+
+export function createNotFoundBlogMetadata(): Metadata {
+  return {
+    title: 'Article not found',
+    robots: { index: false, follow: false },
+  }
+}

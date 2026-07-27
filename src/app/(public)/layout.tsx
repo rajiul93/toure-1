@@ -4,18 +4,14 @@ import Navbar from '@/components/navbar'
 import PublicPageShell from '@/components/public-page-shell'
 import { SiteConfigProvider } from '@/components/site-config/site-config-provider'
 import { TourConfigProvider } from '@/components/tour-config/tour-config-provider'
-import { getSiteConfigFromDB } from '@/lib/services/site-settings.service'
-import { getTourConfigFromDB } from '@/lib/services/tour-settings.service'
+import { loadPublicConfigWithFallback } from '@/lib/public-config'
 
 export default async function PublicLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const [siteConfig, tourConfig] = await Promise.all([
-    getSiteConfigFromDB(),
-    getTourConfigFromDB(),
-  ])
+  const { siteConfig, tourConfig } = await loadPublicConfigWithFallback()
 
   return (
     <SiteConfigProvider config={siteConfig}>

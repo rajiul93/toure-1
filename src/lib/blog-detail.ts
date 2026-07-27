@@ -1,5 +1,5 @@
 import { BLOG_FORM_OPTIONS } from '@/lib/blog-form-options'
-import { BLOG_POST_BODY, BLOG_POSTS, getBlogPost } from '@/lib/blog-posts'
+import { BLOG_POST_BODY, getBlogPost } from '@/lib/blog-posts'
 import {
   repairBlogRecordInDBIfNeeded,
 } from '@/lib/blog-html-repair'

@@ -1,7 +1,5 @@
-'use client'
-
 import type React from 'react'
-import { useTourConfig } from '@/components/tour-config/tour-config-provider'
+import type { ResolvedTourConfig } from '@/lib/tour-config.types'
 import { TIMELINE_STOPS } from '@/lib/itinerary-stops'
 
 interface TimelineProps {
@@ -28,8 +26,10 @@ function Badge({ children, className = '' }: { children: React.ReactNode; classN
   )
 }
 
-export default function TourItinerary({ className = '' }: TimelineProps) {
-  const { louvreTour } = useTourConfig()
+export default function TourItinerary({
+  louvreTour,
+  className = '',
+}: TimelineProps & { louvreTour: ResolvedTourConfig['louvreTour'] }) {
 
   return (
     <section

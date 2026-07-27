@@ -1,4 +1,5 @@
 import { jsonError, requireTeamRoleApi } from '@/lib/auth/require-role-api'
+import { revalidateBlogPaths } from '@/lib/blog-revalidation'
 import { createBlogInDB, listAdminBlogsFromDB } from '@/lib/services/blog.service'
 import { adminBlogListQuerySchema } from '@/lib/validations/admin-blog.validation'
 import { blogFormSchema } from '@/lib/validations/blog-form.validation'
@@ -6,8 +7,10 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
+const ADMIN_ROLES = ['admin'] as const
+
 export async function GET(request: NextRequest) {
-  const authResult = await requireTeamRoleApi(['admin', 'manager', 'marketer'])
+  const authResult = await requireTeamRoleApi([...ADMIN_ROLES])
   if ('error' in authResult) return authResult.error
 
   const parsed = adminBlogListQuerySchema.safeParse(
@@ -28,7 +31,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const authResult = await requireTeamRoleApi(['admin', 'manager', 'marketer'])
+  const authResult = await requireTeamRoleApi([...ADMIN_ROLES])
   if ('error' in authResult) return authResult.error
 
   try {
@@ -40,6 +43,7 @@ export async function POST(request: NextRequest) {
     }
 
     const blog = await createBlogInDB(parsed.data)
+    revalidateBlogPaths({ slug: parsed.data.basic_info.slug })
     return NextResponse.json({ blog }, { status: 201 })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to create blog'

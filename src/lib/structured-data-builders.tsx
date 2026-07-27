@@ -1,26 +1,30 @@
-import { getSiteUrl } from '@/lib/tour-schema'
-import { getSiteConfigFromDB } from '@/lib/services/site-settings.service'
-import { getSiteSeoFromDB } from '@/lib/services/site-seo.service'
-import { getTourConfigFromDB } from '@/lib/services/tour-settings.service'
+import { getSiteUrl } from '@/lib/site-config'
+import type { ResolvedSiteConfig } from '@/lib/site-config.types'
+import type { ResolvedSiteSeoConfig } from '@/lib/site-seo.types'
+import type { ResolvedTourConfig } from '@/lib/tour-config.types'
 
-export default async function StructuredData() {
-  const [site, tourConfig, seo] = await Promise.all([
-    getSiteConfigFromDB(),
-    getTourConfigFromDB(),
-    getSiteSeoFromDB(),
-  ])
-  const { louvreTour, faqs } = tourConfig
+type SiteStructuredDataProps = {
+  site: ResolvedSiteConfig
+  seo: ResolvedSiteSeoConfig
+  shortDescription: string
+}
+
+/** Organization + WebSite — safe on every public page. */
+export function buildSiteStructuredGraph({
+  site,
+  seo,
+  shortDescription,
+}: SiteStructuredDataProps) {
   const siteUrl = getSiteUrl()
-  const productUrl = `${siteUrl}/`
-  const imageUrl = `${siteUrl}${louvreTour.ogImage}`
+  const defaultImage = `${siteUrl}${seo.openGraph.defaultImage.url}`
 
   const orgLogoUrl = seo.organization.logo.url
     ? seo.organization.logo.url.startsWith('http')
       ? seo.organization.logo.url
       : `${siteUrl}${seo.organization.logo.url}`
-    : imageUrl
+    : defaultImage
 
-  const graph = [
+  return [
     {
       '@type': 'Organization',
       '@id': `${siteUrl}/#organization`,
@@ -37,8 +41,28 @@ export default async function StructuredData() {
       '@id': `${siteUrl}/#website`,
       url: siteUrl,
       name: site.brand.full,
-      description: louvreTour.shortDescription,
+      description: shortDescription,
     },
+  ]
+}
+
+type HomeStructuredDataProps = {
+  site: ResolvedSiteConfig
+  seo: ResolvedSiteSeoConfig
+  tourConfig: ResolvedTourConfig
+}
+
+/** Tour-specific schema — home page only. */
+export function buildHomeStructuredGraph({
+  site,
+  tourConfig,
+}: Omit<HomeStructuredDataProps, 'seo'>) {
+  const { louvreTour, faqs } = tourConfig
+  const siteUrl = getSiteUrl()
+  const productUrl = `${siteUrl}/`
+  const imageUrl = `${siteUrl}${louvreTour.ogImage}`
+
+  return [
     {
       '@type': 'TouristTrip',
       '@id': `${productUrl}#trip`,
@@ -137,16 +161,18 @@ export default async function StructuredData() {
       },
     },
   ]
+}
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@graph': graph,
-  }
-
+export function renderJsonLd(graph: Record<string, unknown>[]) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@graph': graph,
+        }),
+      }}
     />
   )
 }

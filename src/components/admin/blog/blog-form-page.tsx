@@ -20,11 +20,7 @@ export default function BlogFormPage({ blogId }: { blogId: string }) {
   }, [clearAll])
 
   useEffect(() => {
-    if (isCreateMode) {
-      setInitialValues(createEmptyBlogFormValues())
-      setIsLoading(false)
-      return
-    }
+    if (isCreateMode) return
 
     let cancelled = false
 

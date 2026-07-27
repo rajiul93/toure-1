@@ -18,7 +18,7 @@ export const BLOG_POSTS = [
     category: 'Planning',
     date: '2026-07-10',
     readTime: '5 min read',
-    image: '/images/banner/1.jpeg',
+    image: '/images/banner/1.webp',
     featured: false,
   },
   {
@@ -29,7 +29,7 @@ export const BLOG_POSTS = [
     category: 'Tickets',
     date: '2026-06-28',
     readTime: '4 min read',
-    image: '/images/banner/2.jpeg',
+    image: '/images/banner/2.webp',
     featured: false,
   },
   {
@@ -40,7 +40,7 @@ export const BLOG_POSTS = [
     category: 'Experience',
     date: '2026-06-14',
     readTime: '6 min read',
-    image: '/images/banner/3.jpeg',
+    image: '/images/banner/3.webp',
     featured: false,
   },
 ] as const

@@ -230,8 +230,10 @@ export default function QuillEditor({
   const [isUploadingImage, setIsUploadingImage] = useState(false)
   const [imageDialogError, setImageDialogError] = useState<string | null>(null)
 
-  onChangeRef.current = onChange
-  valueRef.current = value
+  useEffect(() => {
+    onChangeRef.current = onChange
+    valueRef.current = value
+  })
 
   function resetDialogState() {
     setDialogMode(null)

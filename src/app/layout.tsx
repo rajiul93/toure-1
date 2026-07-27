@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
-import StructuredData from '@/components/structured-data'
+import SiteStructuredData from '@/components/site-structured-data'
 import { createRootSiteMetadata } from '@/lib/metadata'
+import { loadPublicConfigWithFallback } from '@/lib/public-config'
 import { getSiteSeoFromDB } from '@/lib/services/site-seo.service'
-import { getTourConfigFromDB } from '@/lib/services/tour-settings.service'
 import { Manrope, Pinyon_Script } from 'next/font/google'
 import './globals.css'
 
@@ -27,25 +27,23 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const [seo, tourConfig] = await Promise.all([getSiteSeoFromDB(), getTourConfigFromDB()])
-  const featuredBanner = tourConfig.bannerPhotos[0]
+  const [, seoResult] = await Promise.all([
+    loadPublicConfigWithFallback(),
+    getSiteSeoFromDB().catch(() => null),
+  ])
+
+  const language = seoResult?.global.language ?? 'en'
 
   return (
     <html
-      lang={seo.global.language}
+      lang={language}
       className={`${manrope.variable} ${pinyonScript.variable} h-full antialiased`}
     >
       <head>
         <link rel="preconnect" href="https://widgets.bokun.io" />
         <link rel="dns-prefetch" href="https://widgets.bokun.io" />
         <link rel="alternate" type="text/plain" href="/llms.txt" title="LLM site summary" />
-        <link
-          rel="preload"
-          as="image"
-          href={featuredBanner.src}
-          fetchPriority="high"
-        />
-        <StructuredData />
+        <SiteStructuredData />
       </head>
       <body className={`${manrope.className} min-h-full flex flex-col`}>
         {children}
