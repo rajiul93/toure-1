@@ -6,9 +6,13 @@ import { ROLE_LABELS, type AppRole } from '@/lib/auth/roles'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
+  FaBlog,
   FaCalendarDays,
   FaChartLine,
+  FaGear,
   FaHouse,
+  FaMagnifyingGlass,
+  FaRoute,
   FaUsers,
 } from 'react-icons/fa6'
 
@@ -16,12 +20,20 @@ function NavIcon({ icon }: { icon: DashboardNavItem['icon'] }) {
   switch (icon) {
     case 'home':
       return <FaHouse className="size-5 shrink-0 md:size-4" aria-hidden="true" />
+    case 'blog':
+      return <FaBlog className="size-5 shrink-0 md:size-4" aria-hidden="true" />
     case 'users':
       return <FaUsers className="size-5 shrink-0 md:size-4" aria-hidden="true" />
     case 'calendar':
       return <FaCalendarDays className="size-5 shrink-0 md:size-4" aria-hidden="true" />
     case 'chart':
       return <FaChartLine className="size-5 shrink-0 md:size-4" aria-hidden="true" />
+    case 'settings':
+      return <FaGear className="size-5 shrink-0 md:size-4" aria-hidden="true" />
+    case 'tour':
+      return <FaRoute className="size-5 shrink-0 md:size-4" aria-hidden="true" />
+    case 'seo':
+      return <FaMagnifyingGlass className="size-5 shrink-0 md:size-4" aria-hidden="true" />
   }
 }
 
@@ -39,7 +51,7 @@ export default function DashboardSidebar({
   const pathname = usePathname()
 
   return (
-    <aside className="flex h-screen w-16 shrink-0 flex-col overflow-hidden border-r border-zinc-200 bg-white md:w-64">
+    <aside className="sticky top-0 flex h-dvh w-16 shrink-0 flex-col self-start overflow-hidden border-r border-zinc-200 bg-white md:w-64">
       <div className="shrink-0 border-b border-zinc-200 px-2 py-4 md:px-5 md:py-5">
         <Link
           href="/"

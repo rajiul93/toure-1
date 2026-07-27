@@ -1,7 +1,7 @@
 'use client'
 
 import type React from 'react'
-import { LOUVRE_TOUR } from '@/lib/tour-schema'
+import { useTourConfig } from '@/components/tour-config/tour-config-provider'
 import { TIMELINE_STOPS } from '@/lib/itinerary-stops'
 
 interface TimelineProps {
@@ -29,6 +29,8 @@ function Badge({ children, className = '' }: { children: React.ReactNode; classN
 }
 
 export default function TourItinerary({ className = '' }: TimelineProps) {
+  const { louvreTour } = useTourConfig()
+
   return (
     <section
       id="itinerary"
@@ -43,7 +45,7 @@ export default function TourItinerary({ className = '' }: TimelineProps) {
           Itinerary
         </h2>
         <p className="mb-8 text-sm text-zinc-500 sm:text-base">
-          Self-guided visit · {LOUVRE_TOUR.durationLabel} · Start at the Louvre Pyramid
+          Self-guided visit · {louvreTour.durationLabel} · Start at the Louvre Pyramid
         </p>
 
         <ol className="space-y-10">

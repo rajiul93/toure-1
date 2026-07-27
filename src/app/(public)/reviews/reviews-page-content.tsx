@@ -4,7 +4,7 @@ import ReviewFilterChips from '@/components/review-filter-chips'
 import ReviewStars from '@/components/review-stars'
 import PageHero from '@/components/page-hero'
 import { IconStar } from '@/components/icons'
-import { LOUVRE_TOUR } from '@/lib/tour-schema'
+import { useTourConfig } from '@/components/tour-config/tour-config-provider'
 import {
   FILTER_TAGS,
   RATING_BREAKDOWN,
@@ -14,6 +14,7 @@ import {
 import { useState } from 'react'
 
 export default function ReviewsPageContent() {
+  const { louvreTour } = useTourConfig()
   const [activeFilter, setActiveFilter] = useState<FilterId>('all')
 
   const filteredReviews =
@@ -31,12 +32,12 @@ export default function ReviewsPageContent() {
         <div className="inline-flex flex-wrap items-center gap-3 rounded-xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-sm">
           <span className="inline-flex items-center gap-1.5">
             <IconStar className="size-5 text-primary" />
-            <span className="text-2xl font-bold tabular-nums">{LOUVRE_TOUR.rating}</span>
+            <span className="text-2xl font-bold tabular-nums">{louvreTour.rating}</span>
             <span className="text-sm text-zinc-300">/ 5</span>
           </span>
           <span className="hidden h-6 w-px bg-white/20 sm:block" aria-hidden="true" />
           <span className="text-sm font-medium text-zinc-200">
-            {LOUVRE_TOUR.reviewCountLabel} verified reviews
+            {louvreTour.reviewCountLabel} verified reviews
           </span>
         </div>
       </PageHero>

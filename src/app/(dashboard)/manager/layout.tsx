@@ -1,3 +1,4 @@
+import AdminProviders from '@/components/admin/admin-providers'
 import DashboardShell from '@/components/dashboard/dashboard-shell'
 import { requireRole } from '@/lib/auth/require-role'
 
@@ -16,7 +17,7 @@ export default async function ManagerLayout({
       userName={user.name}
       userEmail={user.email}
     >
-      {children}
+      <AdminProviders>{children}</AdminProviders>
     </DashboardShell>
   )
 }

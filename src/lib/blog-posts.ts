@@ -47,6 +47,63 @@ export const BLOG_POSTS = [
 
 export type BlogPost = (typeof BLOG_POSTS)[number]
 
+export type BlogPostListItem = {
+  slug: string
+  title: string
+  date: string
+  image: string
+}
+
+export type BlogPostListResult = {
+  posts: BlogPostListItem[]
+  page: number
+  limit: number
+  total: number
+  totalPages: number
+}
+
+const DEFAULT_BLOG_IMAGE = '/images/banner/0.webp'
+
+export function listMockBlogPosts(params: {
+  search?: string
+  page?: number
+  limit?: number
+}): BlogPostListResult {
+  const page = params.page ?? 1
+  const limit = params.limit ?? 12
+  const search = params.search?.trim().toLowerCase() ?? ''
+
+  let posts: BlogPostListItem[] = BLOG_POSTS.map(({ slug, title, date, image }) => ({
+    slug,
+    title,
+    date,
+    image: image || DEFAULT_BLOG_IMAGE,
+  })).sort((a, b) => b.date.localeCompare(a.date))
+
+  if (search) {
+    posts = posts.filter((post) => {
+      const source = BLOG_POSTS.find((item) => item.slug === post.slug)
+      if (!source) return false
+
+      const haystack = `${source.title} ${source.excerpt} ${source.category}`.toLowerCase()
+      return haystack.includes(search)
+    })
+  }
+
+  const total = posts.length
+  const totalPages = Math.max(1, Math.ceil(total / limit))
+  const safePage = Math.min(Math.max(page, 1), totalPages)
+  const start = (safePage - 1) * limit
+
+  return {
+    posts: posts.slice(start, start + limit),
+    page: safePage,
+    limit,
+    total,
+    totalPages,
+  }
+}
+
 export function getBlogPost(slug: string): BlogPost | undefined {
   return BLOG_POSTS.find((post) => post.slug === slug)
 }

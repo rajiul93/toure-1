@@ -1,26 +1,39 @@
 import SignInForm from '@/app/auth/sign-in/sign-in-form'
-import { BANNER_PHOTOS } from '@/app/(public)/home/photos'
 import { IconLock } from '@/components/icons'
 import { auth } from '@/lib/auth/server'
 import { getRoleHome, isAppRole } from '@/lib/auth/roles'
 import { createPageMetadata } from '@/lib/metadata'
-import { SITE } from '@/lib/site-config'
+import { getSiteConfigFromDB } from '@/lib/services/site-settings.service'
+import { getTourConfigFromDB } from '@/lib/services/tour-settings.service'
 import Image from 'next/image'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
-const SIGN_IN_PHOTO = BANNER_PHOTOS[0]
+async function getSignInPhoto() {
+  const tourConfig = await getTourConfigFromDB()
+  const featured = tourConfig.bannerPhotos[0]
+  return {
+    src: featured.src,
+    alt: featured.alt,
+  }
+}
 
-function DesktopHeroContent() {
+function DesktopHeroContent({
+  brandName,
+  brandScript,
+}: {
+  brandName: string
+  brandScript: string
+}) {
   return (
     <div>
       <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-300/90">
         Team access
       </p>
       <h1 className="mt-3 text-[2rem] font-bold leading-tight tracking-tight text-white">
-        <span className="block">{SITE.brand.name}</span>
+        <span className="block">{brandName}</span>
         <span className="font-script text-[2.75rem] font-normal text-secondary">
-          {SITE.brand.script}
+          {brandScript}
         </span>
       </h1>
       <p className="mt-4 max-w-sm text-sm leading-relaxed text-zinc-200/95">
@@ -44,6 +57,7 @@ export const metadata = createPageMetadata({
 export const dynamic = 'force-dynamic'
 
 export default async function SignInPage() {
+  const [site, signInPhoto] = await Promise.all([getSiteConfigFromDB(), getSignInPhoto()])
   const { data: session } = await auth.getSession()
   const role = session?.user?.role
 
@@ -70,9 +84,9 @@ export default async function SignInPage() {
             href="/"
             className="inline-flex min-w-0 items-baseline gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
-            <span className="truncate text-sm font-bold text-heading">{SITE.brand.name}</span>
+            <span className="truncate text-sm font-bold text-heading">{site.brand.name}</span>
             <span className="font-script text-xl leading-none text-secondary">
-              {SITE.brand.script}
+              {site.brand.script}
             </span>
           </Link>
           <Link
@@ -92,10 +106,10 @@ export default async function SignInPage() {
             className="inline-flex items-baseline gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
             <span className="text-base font-bold tracking-tight text-heading">
-              {SITE.brand.name}
+              {site.brand.name}
             </span>
             <span className="font-script text-2xl leading-none text-secondary">
-              {SITE.brand.script}
+              {site.brand.script}
             </span>
           </Link>
           <Link
@@ -113,7 +127,7 @@ export default async function SignInPage() {
             {/* Mobile image strip — inside card, compact */}
             <div className="relative h-36 overflow-hidden lg:hidden">
               <Image
-                src={SIGN_IN_PHOTO.src}
+                src={signInPhoto.src}
                 alt=""
                 fill
                 className="object-cover object-[center_35%]"
@@ -137,8 +151,8 @@ export default async function SignInPage() {
             {/* Desktop image panel */}
             <section className="relative hidden min-h-136 lg:block">
               <Image
-                src={SIGN_IN_PHOTO.src}
-                alt={SIGN_IN_PHOTO.alt}
+                src={signInPhoto.src}
+                alt={signInPhoto.alt}
                 fill
                 className="object-cover object-center"
                 sizes="(min-width: 1024px) 520px, 0px"
@@ -153,7 +167,10 @@ export default async function SignInPage() {
                 aria-hidden="true"
               />
               <div className="relative z-10 flex h-full flex-col justify-end p-10 xl:p-12">
-                <DesktopHeroContent />
+                <DesktopHeroContent
+                  brandName={site.brand.name}
+                  brandScript={site.brand.script}
+                />
               </div>
             </section>
 

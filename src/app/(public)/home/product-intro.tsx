@@ -1,5 +1,7 @@
+'use client'
+
 import { IconStar } from '@/components/icons'
-import { LOUVRE_TOUR } from '@/lib/tour-schema'
+import { useTourConfig } from '@/components/tour-config/tour-config-provider'
 import {
   FaClock,
   FaHeadphones,
@@ -86,6 +88,8 @@ const FEATURES = [
 ] as const
 
 export default function ProductIntro() {
+  const { louvreTour } = useTourConfig()
+
   return (
     <section className="py-4 sm:py-5" aria-labelledby="product-title">
       <div
@@ -116,17 +120,17 @@ export default function ProductIntro() {
           <a
             href="/reviews"
             className="order-1 inline-flex shrink-0 items-center gap-2 self-start rounded-xl border border-primary-muted bg-primary-soft px-3 py-1.5 shadow-sm transition hover:border-primary hover:bg-primary-muted/60 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:order-2 sm:ml-auto sm:self-center sm:py-2"
-            aria-label={`Rated ${LOUVRE_TOUR.rating} out of 5 stars — read ${LOUVRE_TOUR.reviewCountLabel} reviews`}
+            aria-label={`Rated ${louvreTour.rating} out of 5 stars — read ${louvreTour.reviewCountLabel} reviews`}
           >
             <span className="inline-flex items-center gap-1 rounded-lg bg-white/90 px-2 py-0.5 shadow-sm ring-1 ring-primary-muted/60">
               <IconStar className="size-4 text-primary" />
-              <span className="text-base font-extrabold tabular-nums text-heading">{LOUVRE_TOUR.rating}</span>
+              <span className="text-base font-extrabold tabular-nums text-heading">{louvreTour.rating}</span>
             </span>
             <span className="hidden text-primary-muted sm:inline" aria-hidden="true">
               ·
             </span>
             <span className="text-xs font-semibold text-primary-dark underline underline-offset-2 sm:text-sm">
-              {LOUVRE_TOUR.reviewCountLabel} reviews
+              {louvreTour.reviewCountLabel} reviews
             </span>
           </a>
         </div>

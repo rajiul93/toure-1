@@ -1,7 +1,7 @@
 'use client';
 
+import type { BannerPhoto } from '@/lib/tour-config.types';
 import Image from 'next/image';
-import { BANNER_PHOTOS } from './photos';
 
 function PhotoBadge({ label }: { label: string }) {
   return (
@@ -11,9 +11,8 @@ function PhotoBadge({ label }: { label: string }) {
   );
 }
 
-/** Mobile: featured photo full-width (fixed); the rest scroll — 2 full + ~40% of the 3rd visible. */
-export default function BannerSlider() {
-  const [featured, ...tiles] = BANNER_PHOTOS;
+export default function BannerSlider({ bannerPhotos }: { bannerPhotos: BannerPhoto[] }) {
+  const [featured, ...tiles] = bannerPhotos;
 
   return (
     <div className="flex flex-col gap-2">
@@ -39,7 +38,7 @@ export default function BannerSlider() {
       <div className="scrollbar-none flex snap-x snap-mandatory gap-2 overflow-x-auto overscroll-x-contain [-webkit-overflow-scrolling:touch]">
         {tiles.map((photo, i) => (
           <div
-            key={photo.src}
+            key={`${photo.src}-${i}`}
             className="relative aspect-4/3 w-[calc((100%-1rem)/2.4)] shrink-0 snap-start overflow-hidden rounded-2xl"
           >
             <Image

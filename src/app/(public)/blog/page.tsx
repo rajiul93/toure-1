@@ -1,13 +1,11 @@
 import BlogPageContent from '@/components/blog/blog-page-content'
 import QueryProvider from '@/components/providers/query-provider'
-import { createPageMetadata } from '@/lib/metadata'
+import { createSeoPageMetadata } from '@/lib/metadata'
+import type { Metadata } from 'next'
 
-export const metadata = createPageMetadata({
-  title: 'Latest Blog Posts — Louvre Tips & Museum Guides',
-  description:
-    'Planning tips, Louvre routes, and ticket advice for a calm, memorable museum day in Paris.',
-  path: '/blog',
-})
+export async function generateMetadata(): Promise<Metadata> {
+  return createSeoPageMetadata('blog')
+}
 
 export default function BlogPage() {
   return (

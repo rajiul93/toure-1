@@ -1,20 +1,19 @@
 import PageHero from '@/components/page-hero'
-import { createPageMetadata } from '@/lib/metadata'
+import { createSeoPageMetadata } from '@/lib/metadata'
 import { getAttractionTours } from '@/lib/tour-schema'
+import { getTourConfigFromDB } from '@/lib/services/tour-settings.service'
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { FaStar } from 'react-icons/fa6'
 
-export const metadata: Metadata = createPageMetadata({
-  title: 'Attraction Tours — Paris Day Tours & Museum Tickets',
-  description:
-    'Browse timed-entry museum tours in Paris. Louvre Pyramid tickets with audio guide — instant confirmation and mobile tickets.',
-  path: '/attraction-tours',
-})
+export async function generateMetadata(): Promise<Metadata> {
+  return createSeoPageMetadata('attractionTours')
+}
 
-export default function AttractionToursPage() {
-  const tours = getAttractionTours()
+export default async function AttractionToursPage() {
+  const tourConfig = await getTourConfigFromDB()
+  const tours = getAttractionTours(tourConfig)
 
   return (
     <div>

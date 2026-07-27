@@ -1,12 +1,10 @@
 import Hero from './home/hero'
-import { createPageMetadata } from '@/lib/metadata'
-import { LOUVRE_TOUR } from '@/lib/tour-schema'
+import { createSeoPageMetadata } from '@/lib/metadata'
+import type { Metadata } from 'next'
 
-export const metadata = createPageMetadata({
-  title: LOUVRE_TOUR.title,
-  description: LOUVRE_TOUR.description,
-  path: '/',
-})
+export async function generateMetadata(): Promise<Metadata> {
+  return createSeoPageMetadata('home')
+}
 
 export default function Home() {
   return <Hero />

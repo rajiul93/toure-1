@@ -1,16 +1,18 @@
 'use client'
 
+import { BrandLogoLink } from '@/components/brand-logo'
 import { IconClose, IconMenu } from '@/components/icons'
 import NavMenuBar from '@/components/nav-menu-bar'
+import { useSiteConfig } from '@/components/site-config/site-config-provider'
 import { useNavActive } from '@/hooks/use-nav-active'
 import { NAV_LINKS } from '@/lib/nav-links'
-import { SITE } from '@/lib/site-config'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useId, useState } from 'react'
 import { BsWhatsapp } from 'react-icons/bs'
 
 export default function Navbar() {
+  const site = useSiteConfig()
   const [open, setOpen] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
@@ -57,18 +59,7 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b border-zinc-200/80 bg-white/85 backdrop-blur-md supports-backdrop-filter:bg-white/75">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-3 px-4 sm:h-16">
-        <Link
-          href="/"
-          className="group inline-flex min-w-0 shrink-0 items-baseline gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-          onClick={closeMenu}
-        >
-          <span className="truncate text-sm font-bold tracking-tight text-heading sm:text-base">
-            {SITE.brand.name}
-          </span>
-          <span className="hidden font-script text-lg leading-none text-secondary sm:inline sm:text-xl">
-            {SITE.brand.script}
-          </span>
-        </Link>
+        <BrandLogoLink onClick={closeMenu} />
 
         <div className="hidden min-w-0 flex-1 justify-center lg:flex">
           <NavMenuBar />
@@ -76,13 +67,13 @@ export default function Navbar() {
 
         <div className="flex shrink-0 items-center gap-2">
           <a
-            href={SITE.contact.whatsappUrl}
+            href={site.contact.whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="hidden items-center gap-2 rounded-xl bg-success px-3.5 py-2 text-sm font-semibold text-success-foreground transition hover:bg-success-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success focus-visible:ring-offset-2 sm:inline-flex"
           >
             <BsWhatsapp className="size-4 shrink-0" aria-hidden="true" />
-            {SITE.contact.whatsappNavLabel}
+            {site.contact.whatsappNavLabel}
           </a>
 
           <button
@@ -164,14 +155,14 @@ export default function Navbar() {
                 }}
               >
                 <a
-                  href={SITE.contact.whatsappUrl}
+                  href={site.contact.whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={closeMenu}
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-success px-4 py-3.5 text-base font-semibold text-success-foreground shadow-sm transition hover:bg-success-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success focus-visible:ring-offset-2"
                 >
                   <BsWhatsapp className="size-5 shrink-0" aria-hidden="true" />
-                  {SITE.contact.whatsappNavLabel}
+                  {site.contact.whatsappNavLabel}
                 </a>
               </div>
             </nav>

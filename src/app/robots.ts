@@ -1,28 +1,29 @@
+import { getSiteSeoFromDB } from '@/lib/services/site-seo.service'
+import { getSiteUrl } from '@/lib/site-config'
 import type { MetadataRoute } from 'next'
-import { getSiteUrl } from '@/lib/tour-schema'
 
-export default function robots(): MetadataRoute.Robots {
+export default async function robots(): Promise<MetadataRoute.Robots> {
+  const [seo] = await Promise.all([getSiteSeoFromDB()])
   const siteUrl = getSiteUrl()
 
+  const rules: MetadataRoute.Robots['rules'] = [
+    {
+      userAgent: '*',
+      allow: '/',
+      disallow: seo.crawlers.disallowPaths,
+    },
+  ]
+
+  if (seo.crawlers.allowAiBots) {
+    rules.push(
+      { userAgent: 'GPTBot', allow: '/' },
+      { userAgent: 'ClaudeBot', allow: '/' },
+      { userAgent: 'PerplexityBot', allow: '/' },
+    )
+  }
+
   return {
-    rules: [
-      {
-        userAgent: '*',
-        allow: '/',
-      },
-      {
-        userAgent: 'GPTBot',
-        allow: '/',
-      },
-      {
-        userAgent: 'ClaudeBot',
-        allow: '/',
-      },
-      {
-        userAgent: 'PerplexityBot',
-        allow: '/',
-      },
-    ],
+    rules,
     sitemap: `${siteUrl}/sitemap.xml`,
     host: siteUrl,
   }

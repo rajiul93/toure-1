@@ -19,7 +19,7 @@ export default function DashboardShell({
   children: ReactNode
 }) {
   return (
-    <div className="flex h-screen overflow-hidden bg-zinc-50">
+    <div className="flex min-h-dvh bg-zinc-50">
       <DashboardSidebar
         role={role}
         userName={userName}
@@ -27,7 +27,7 @@ export default function DashboardShell({
         items={DASHBOARD_NAV[role]}
       />
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col">
         {title || description ? (
           <header className="shrink-0 border-b border-zinc-200 bg-white px-6 py-5">
             {title ? <h1 className="text-xl font-bold text-heading">{title}</h1> : null}
@@ -37,7 +37,7 @@ export default function DashboardShell({
           </header>
         ) : null}
 
-        <main className="min-h-0 flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6">{children}</main>
+        <main className="flex-1 px-4 py-4 md:px-6 md:py-6">{children}</main>
       </div>
     </div>
   )

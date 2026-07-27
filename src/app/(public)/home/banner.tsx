@@ -1,5 +1,7 @@
+'use client'
+
 import Image from 'next/image'
-import { BANNER_PHOTOS } from './photos'
+import { useTourConfig } from '@/components/tour-config/tour-config-provider'
 import BannerSlider from './banner-slider'
 
 function PhotoBadge({ label }: { label: string }) {
@@ -22,9 +24,8 @@ function PhotoCountBadge({ className = '' }: { className?: string }) {
   )
 }
 
-/** Tablet: Featured image on left (60%), 2 stacked on right (40%) */
-function BannerTablet() {
-  const [featured, second, third] = BANNER_PHOTOS
+function BannerTablet({ bannerPhotos }: { bannerPhotos: ReturnType<typeof useTourConfig>['bannerPhotos'] }) {
+  const [featured, second, third] = bannerPhotos
 
   return (
     <div className="grid h-full min-h-0 grid-cols-5 gap-2.5">
@@ -67,9 +68,8 @@ function BannerTablet() {
   )
 }
 
-/** Desktop: 4-column grid with featured spanning 2 cols */
-function BannerGrid() {
-  const [featured, ...tiles] = BANNER_PHOTOS
+function BannerGrid({ bannerPhotos }: { bannerPhotos: ReturnType<typeof useTourConfig>['bannerPhotos'] }) {
+  const [featured, ...tiles] = bannerPhotos
 
   return (
     <div className="grid h-full min-h-0 grid-cols-4 grid-rows-2 gap-2.5">
@@ -106,21 +106,18 @@ function BannerGrid() {
 }
 
 export default function Banner() {
+  const { bannerPhotos } = useTourConfig()
+
   return (
     <section className="h-full w-full min-h-0" aria-label="Photo gallery">
-      {/* Mobile: Slider */}
       <div className="h-full md:hidden">
-        <BannerSlider />
+        <BannerSlider bannerPhotos={bannerPhotos} />
       </div>
-      {/* Tablet: 3+2 layout — self-sized via aspect ratio since the ancestor
-          chain has no definite height at this breakpoint (unlike desktop,
-          which gets an explicit JS-measured height from Hero). */}
       <div className="hidden aspect-2/1 md:block lg:hidden">
-        <BannerTablet />
+        <BannerTablet bannerPhotos={bannerPhotos} />
       </div>
-      {/* Desktop: Full grid */}
       <div className="hidden h-full lg:block">
-        <BannerGrid />
+        <BannerGrid bannerPhotos={bannerPhotos} />
       </div>
     </section>
   )

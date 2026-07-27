@@ -1,0 +1,114 @@
+// Day Tour Paris — PostgreSQL (Neon)
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Image {
+  id         String       @id @default(cuid())
+  key        String       @unique
+  url        String
+  filename   String
+  mimeType   String
+  size       Int
+  alt        String?
+  uploadedBy String?
+  usages     ImageUsage[]
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@index([createdAt])
+}
+
+model ImageUsage {
+  id         String   @id @default(cuid())
+  imageId    String
+  image      Image    @relation(fields: [imageId], references: [id], onDelete: Cascade)
+  entityType String
+  entityId   String
+  field      String   @default("default")
+  createdAt  DateTime @default(now())
+
+  @@unique([imageId, entityType, entityId, field])
+  @@index([entityType, entityId])
+  @@index([imageId])
+}
+
+enum PublishStatus {
+  DRAFT
+  PUBLISH
+}
+
+model Blog {
+  id                String        @id @default(cuid())
+  blogDate          DateTime      @db.Date
+  publishDate       DateTime      @db.Date
+  publishStatus     PublishStatus @default(DRAFT)
+  isDeleted         Boolean       @default(false)
+  authorId          String
+  tags              String[]
+  keywords          String[]
+  categoryId        String
+  countryId         String
+  title             String
+  slug              String    @unique
+  shortDescription  String
+  description       String    @db.Text
+  featuredImageUrl  String    @default("")
+  featuredImageAlt  String    @default("")
+  isFeatured        Boolean   @default(false)
+  metaTitle         String
+  metaDescription   String
+  metaImageUrl      String    @default("")
+  metaImageAlt      String    @default("")
+  fbMetaTitle       String    @default("")
+  fbMetaDescription String    @default("")
+  fbMetaImageUrl    String    @default("")
+  fbMetaImageAlt    String    @default("")
+  faqs              BlogFaq[]
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([publishDate])
+  @@index([publishStatus])
+  @@index([isDeleted])
+  @@index([createdAt])
+}
+
+model BlogFaq {
+  id        String @id @default(cuid())
+  blogId    String
+  blog      Blog   @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  question  String
+  answer    String @db.Text
+  sortOrder Int    @default(0)
+
+  @@index([blogId])
+}
+
+model SiteSettings {
+  id        String   @id @default("default")
+  data      Json
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+}
+
+model TourSettings {
+  id        String   @id @default("default")
+  data      Json
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+}
+
+model SeoSettings {
+  id        String   @id @default("default")
+  data      Json
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+}

@@ -1,6 +1,10 @@
-import { TOUR_FAQ } from '@/lib/tour-schema'
+'use client'
+
+import { useTourConfig } from '@/components/tour-config/tour-config-provider'
 
 export default function TourFaq() {
+  const { faqs } = useTourConfig()
+
   return (
     <section
       id="faq"
@@ -15,7 +19,7 @@ export default function TourFaq() {
       </p>
 
       <dl className="mt-5 divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white">
-        {TOUR_FAQ.map((item) => (
+        {faqs.map((item) => (
           <div key={item.id} className="px-4 py-4 sm:px-5">
             <dt className="text-sm font-semibold text-zinc-900 sm:text-base">{item.question}</dt>
             <dd className="mt-2 text-sm leading-relaxed text-zinc-700">{item.answer}</dd>

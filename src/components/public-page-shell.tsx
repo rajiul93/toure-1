@@ -6,6 +6,10 @@ import type { ReactNode } from 'react'
 
 const PAGES_WITHOUT_BOOKING = new Set(['/about-us'])
 
+function shouldHideBooking(pathname: string): boolean {
+  return PAGES_WITHOUT_BOOKING.has(pathname) || pathname.startsWith('/legal/')
+}
+
 const SIDEBAR_HOME_CLASS =
   'lg:col-span-2 lg:col-start-5 lg:row-span-2 lg:row-start-1 lg:sticky lg:top-[4.5rem]'
 
@@ -15,7 +19,7 @@ const SIDEBAR_PAGE_CLASS =
 export default function PublicPageShell({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const isHome = pathname === '/'
-  const showBooking = !PAGES_WITHOUT_BOOKING.has(pathname)
+  const showBooking = !shouldHideBooking(pathname)
 
   return (
     <div className="grid grid-cols-1 gap-6 py-6 lg:grid-cols-6 lg:items-start">

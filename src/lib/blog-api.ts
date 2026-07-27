@@ -1,14 +1,16 @@
-import type { BlogPostListItem } from '@/app/api/blog/route'
+import type { BlogPostListResult } from '@/lib/blog-posts'
 import axios from 'axios'
 
-type BlogPostsResponse = {
-  posts: BlogPostListItem[]
-}
-
-export async function fetchBlogPosts(search: string): Promise<BlogPostListItem[]> {
-  const { data } = await axios.get<BlogPostsResponse>('/api/blog', {
-    params: search ? { search } : undefined,
+export async function fetchBlogPosts(params: {
+  search: string
+  page: number
+}): Promise<BlogPostListResult> {
+  const { data } = await axios.get<BlogPostListResult>('/api/blog', {
+    params: {
+      page: params.page,
+      ...(params.search ? { search: params.search } : {}),
+    },
   })
 
-  return data.posts
+  return data
 }

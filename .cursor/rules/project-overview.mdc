@@ -16,6 +16,7 @@ Louvre timed-entry booking site for **Day Tour Paris**. Public marketing pages +
 - **framer-motion** — mobile nav animations
 - **leaflet** — meeting-point map on home
 - **react-icons** — icon set alongside local SVG icons in `src/components/icons.tsx`
+- **Prisma 6** + **PostgreSQL (Neon)** — `@prisma/adapter-pg` + `pg`; client in `generated/prisma`, singleton in `src/lib/db.ts`
 
 ## Routes
 
@@ -99,7 +100,7 @@ public/
 
 ## Config & content
 
-- **Env vars** (see `.env.example`): `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_WHATSAPP_NUMBER`, `NEXT_PUBLIC_BOKUN_*`, `NEON_AUTH_BASE_URL`, `NEON_AUTH_COOKIE_SECRET`.
+- **Env vars** (see `.env.example`): `DATABASE_URL`, `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_WHATSAPP_NUMBER`, `NEXT_PUBLIC_BOKUN_*`, `NEON_AUTH_BASE_URL`, `NEON_AUTH_COOKIE_SECRET`.
 - **Single source of truth**: edit brand, Bokun URLs, about copy, legal/footer links in `src/lib/site-config.ts`.
 - Tour facts, pricing, FAQ, schema: `src/lib/tour-schema.ts`.
 - Page metadata helper: `src/lib/metadata.ts` (`createPageMetadata`).

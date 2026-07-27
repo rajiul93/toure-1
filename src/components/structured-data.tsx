@@ -1,24 +1,49 @@
-import { getSiteUrl, LOUVRE_TOUR, TOUR_FAQ } from '@/lib/tour-schema'
-import { SITE } from '@/lib/site-config'
+import { getSiteUrl } from '@/lib/tour-schema'
+import { getSiteConfigFromDB } from '@/lib/services/site-settings.service'
+import { getSiteSeoFromDB } from '@/lib/services/site-seo.service'
+import { getTourConfigFromDB } from '@/lib/services/tour-settings.service'
 
-export default function StructuredData() {
+export default async function StructuredData() {
+  const [site, tourConfig, seo] = await Promise.all([
+    getSiteConfigFromDB(),
+    getTourConfigFromDB(),
+    getSiteSeoFromDB(),
+  ])
+  const { louvreTour, faqs } = tourConfig
   const siteUrl = getSiteUrl()
   const productUrl = `${siteUrl}/`
-  const imageUrl = `${siteUrl}${LOUVRE_TOUR.ogImage}`
+  const imageUrl = `${siteUrl}${louvreTour.ogImage}`
+
+  const orgLogoUrl = seo.organization.logo.url
+    ? seo.organization.logo.url.startsWith('http')
+      ? seo.organization.logo.url
+      : `${siteUrl}${seo.organization.logo.url}`
+    : imageUrl
 
   const graph = [
+    {
+      '@type': 'Organization',
+      '@id': `${siteUrl}/#organization`,
+      name: seo.organization.name || site.brand.full,
+      description: seo.organization.description,
+      url: siteUrl,
+      logo: orgLogoUrl,
+      ...(seo.organization.email ? { email: seo.organization.email } : {}),
+      ...(seo.organization.telephone ? { telephone: seo.organization.telephone } : {}),
+      ...(seo.organization.sameAs.length > 0 ? { sameAs: seo.organization.sameAs } : {}),
+    },
     {
       '@type': 'WebSite',
       '@id': `${siteUrl}/#website`,
       url: siteUrl,
-      name: SITE.brand.full,
-      description: LOUVRE_TOUR.shortDescription,
+      name: site.brand.full,
+      description: louvreTour.shortDescription,
     },
     {
       '@type': 'TouristTrip',
       '@id': `${productUrl}#trip`,
-      name: LOUVRE_TOUR.name,
-      description: LOUVRE_TOUR.description,
+      name: louvreTour.name,
+      description: louvreTour.description,
       touristType: 'Self-guided museum visit',
       itinerary: {
         '@type': 'ItemList',
@@ -45,38 +70,38 @@ export default function StructuredData() {
       },
       offers: {
         '@type': 'Offer',
-        price: LOUVRE_TOUR.price,
-        priceCurrency: LOUVRE_TOUR.priceCurrency,
+        price: louvreTour.price,
+        priceCurrency: louvreTour.priceCurrency,
         availability: 'https://schema.org/InStock',
         url: productUrl,
       },
       provider: {
         '@type': 'Organization',
-        name: SITE.brand.full,
+        name: site.brand.full,
         url: siteUrl,
       },
     },
     {
       '@type': 'Product',
       '@id': `${productUrl}#product`,
-      name: LOUVRE_TOUR.name,
-      description: LOUVRE_TOUR.description,
+      name: louvreTour.name,
+      description: louvreTour.description,
       image: imageUrl,
       brand: {
         '@type': 'Brand',
-        name: SITE.brand.full,
+        name: site.brand.full,
       },
       offers: {
         '@type': 'Offer',
-        price: LOUVRE_TOUR.price,
-        priceCurrency: LOUVRE_TOUR.priceCurrency,
+        price: louvreTour.price,
+        priceCurrency: louvreTour.priceCurrency,
         availability: 'https://schema.org/InStock',
         url: productUrl,
       },
       aggregateRating: {
         '@type': 'AggregateRating',
-        ratingValue: LOUVRE_TOUR.rating,
-        reviewCount: LOUVRE_TOUR.reviewCount,
+        ratingValue: louvreTour.rating,
+        reviewCount: louvreTour.reviewCount,
         bestRating: 5,
         worstRating: 1,
       },
@@ -84,7 +109,7 @@ export default function StructuredData() {
     {
       '@type': 'FAQPage',
       '@id': `${productUrl}#faq`,
-      mainEntity: TOUR_FAQ.map((item) => ({
+      mainEntity: faqs.map((item) => ({
         '@type': 'Question',
         name: item.question,
         acceptedAnswer: {
@@ -107,8 +132,8 @@ export default function StructuredData() {
       },
       geo: {
         '@type': 'GeoCoordinates',
-        latitude: LOUVRE_TOUR.meetingPointCoords.lat,
-        longitude: LOUVRE_TOUR.meetingPointCoords.lng,
+        latitude: louvreTour.meetingPointCoords.lat,
+        longitude: louvreTour.meetingPointCoords.lng,
       },
     },
   ]

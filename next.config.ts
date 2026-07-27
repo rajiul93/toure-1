@@ -1,8 +1,31 @@
 import type { NextConfig } from "next";
 
+function getR2ImageRemotePattern() {
+  const publicUrl = process.env.R2_PUBLIC_URL?.trim();
+  if (!publicUrl) return null;
+
+  try {
+    const { protocol, hostname } = new URL(publicUrl);
+    if (protocol !== "https:" && protocol !== "http:") return null;
+
+    return {
+      protocol: protocol.replace(":", "") as "https" | "http",
+      hostname,
+      pathname: "/**",
+    };
+  } catch {
+    return null;
+  }
+}
+
+const r2ImageRemotePattern = getR2ImageRemotePattern();
+
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
+  images: {
+    remotePatterns: r2ImageRemotePattern ? [r2ImageRemotePattern] : [],
+  },
   async headers() {
     return [
       {

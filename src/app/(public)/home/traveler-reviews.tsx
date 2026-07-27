@@ -7,13 +7,10 @@ import {
 } from '@/components/icons'
 import ReviewFilterChips from '@/components/review-filter-chips'
 import ReviewStars from '@/components/review-stars'
-import { LOUVRE_TOUR } from '@/lib/tour-schema'
+import { useTourConfig } from '@/components/tour-config/tour-config-provider'
 import { FILTER_TAGS, REVIEWS, type FilterId } from '@/lib/reviews-data'
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
-
-const RATING = LOUVRE_TOUR.rating
-const REVIEW_COUNT = LOUVRE_TOUR.reviewCountLabel
 
 function ScrollButton({
   direction,
@@ -77,6 +74,9 @@ function useScrollEdges(
 }
 
 export default function TravelerReviews() {
+  const { louvreTour } = useTourConfig()
+  const rating = louvreTour.rating
+  const reviewCount = louvreTour.reviewCountLabel
   const [activeFilter, setActiveFilter] = useState<FilterId>('all')
   const chipScrollRef = useRef<HTMLDivElement>(null)
   const cardScrollRef = useRef<HTMLDivElement>(null)
@@ -105,16 +105,16 @@ export default function TravelerReviews() {
         </h2>
 
         <div className="flex items-center gap-2 text-sm sm:text-base">
-          <span className="inline-flex items-center gap-1.5" aria-label={`Rated ${RATING} out of 5 stars`}>
+          <span className="inline-flex items-center gap-1.5" aria-label={`Rated ${rating} out of 5 stars`}>
             <IconStar className="size-5 text-primary" />
-            <span className="font-bold text-zinc-900">{RATING}</span>
+            <span className="font-bold text-zinc-900">{rating}</span>
           </span>
           <span className="text-zinc-400" aria-hidden="true">
             •
           </span>
           <span className="font-medium text-zinc-900 underline underline-offset-2">
             <Link href="/reviews" className="hover:text-primary">
-              {REVIEW_COUNT} Reviews
+              {reviewCount} Reviews
             </Link>
           </span>
         </div>

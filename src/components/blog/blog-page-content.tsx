@@ -1,21 +1,37 @@
 'use client'
 
 import BlogSearchBar from '@/components/blog/blog-search-bar'
+import { formatBlogDisplayDate } from '@/lib/dayjs'
 import { fetchBlogPosts } from '@/lib/blog-api'
 import { SITE } from '@/lib/site-config'
 import { useBlogSearchStore } from '@/store/blog-search-store'
 import { useQuery } from '@tanstack/react-query'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useState } from 'react'
 
 export default function BlogPageContent() {
   const debouncedQuery = useBlogSearchStore((state) => state.debouncedQuery)
+  const [pagination, setPagination] = useState({ query: debouncedQuery, page: 1 })
 
-  const { data: posts = [], isLoading, isFetching } = useQuery({
-    queryKey: ['blog-posts', debouncedQuery],
-    queryFn: () => fetchBlogPosts(debouncedQuery),
+  const page = pagination.query === debouncedQuery ? pagination.page : 1
+
+  function setPage(next: number | ((current: number) => number)) {
+    setPagination((current) => {
+      const activePage = current.query === debouncedQuery ? current.page : 1
+      const resolvedPage = typeof next === 'function' ? next(activePage) : next
+
+      return { query: debouncedQuery, page: resolvedPage }
+    })
+  }
+
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ['blog-posts', debouncedQuery, page],
+    queryFn: () => fetchBlogPosts({ search: debouncedQuery, page }),
   })
 
+  const posts = data?.posts ?? []
+  const totalPages = data?.totalPages ?? 1
   const showLoading = isLoading || (isFetching && posts.length === 0)
 
   return (
@@ -70,7 +86,7 @@ export default function BlogPageContent() {
                       dateTime={post.date}
                       className="mt-2 block text-sm text-zinc-400"
                     >
-                      {post.date}
+                      {formatBlogDisplayDate(post.date)}
                     </time>
                   </Link>
                 </article>
@@ -85,6 +101,33 @@ export default function BlogPageContent() {
           </div>
         ) : null}
       </div>
+
+      {!showLoading && totalPages > 1 ? (
+        <nav
+          className="mt-10 flex items-center justify-center gap-3"
+          aria-label="Blog pagination"
+        >
+          <button
+            type="button"
+            onClick={() => setPage((current) => Math.max(1, current - 1))}
+            disabled={page <= 1 || isFetching}
+            className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-semibold text-heading transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Previous
+          </button>
+          <span className="text-sm text-zinc-500">
+            Page {data?.page ?? page} of {totalPages}
+          </span>
+          <button
+            type="button"
+            onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+            disabled={page >= totalPages || isFetching}
+            className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-semibold text-heading transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Next
+          </button>
+        </nav>
+      ) : null}
     </div>
   )
 }

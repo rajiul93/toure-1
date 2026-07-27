@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import StructuredData from '@/components/structured-data'
-import { BANNER_PHOTOS } from './(public)/home/photos'
-import { getSiteUrl, SITE } from '@/lib/site-config'
-import { LOUVRE_TOUR } from '@/lib/tour-schema'
+import { createRootSiteMetadata } from '@/lib/metadata'
+import { getSiteSeoFromDB } from '@/lib/services/site-seo.service'
+import { getTourConfigFromDB } from '@/lib/services/tour-settings.service'
 import { Manrope, Pinyon_Script } from 'next/font/google'
 import './globals.css'
 
@@ -18,24 +18,21 @@ const pinyonScript = Pinyon_Script({
   weight: '400',
 })
 
-export const metadata: Metadata = {
-  metadataBase: new URL(getSiteUrl()),
-  title: {
-    default: LOUVRE_TOUR.title,
-    template: `%s | ${SITE.brand.full}`,
-  },
-  description: LOUVRE_TOUR.description,
-  keywords: [...LOUVRE_TOUR.keywords],
+export async function generateMetadata(): Promise<Metadata> {
+  return createRootSiteMetadata()
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const [seo, tourConfig] = await Promise.all([getSiteSeoFromDB(), getTourConfigFromDB()])
+  const featuredBanner = tourConfig.bannerPhotos[0]
+
   return (
     <html
-      lang="en"
+      lang={seo.global.language}
       className={`${manrope.variable} ${pinyonScript.variable} h-full antialiased`}
     >
       <head>
@@ -45,7 +42,7 @@ export default function RootLayout({
         <link
           rel="preload"
           as="image"
-          href={BANNER_PHOTOS[0].src}
+          href={featuredBanner.src}
           fetchPriority="high"
         />
         <StructuredData />

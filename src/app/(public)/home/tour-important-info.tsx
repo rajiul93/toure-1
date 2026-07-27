@@ -1,7 +1,7 @@
 'use client'
 
 import { IconChevronDown } from '@/components/icons'
-import { TOUR_IMPORTANT_INFO } from '@/lib/tour-schema'
+import { useTourConfig } from '@/components/tour-config/tour-config-provider'
 import { useId, useRef, useState } from 'react'
 
 function AccordionItem({
@@ -72,6 +72,8 @@ function AccordionItem({
 }
 
 export default function TourImportantInfo() {
+  const { importantInfo } = useTourConfig()
+
   return (
     <section
       id="important-info"
@@ -83,7 +85,7 @@ export default function TourImportantInfo() {
       </h2>
 
       <div className="mt-5 divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white">
-        {TOUR_IMPORTANT_INFO.map((section) => (
+        {importantInfo.map((section) => (
           <AccordionItem key={section.id} title={section.title} items={section.items} />
         ))}
       </div>

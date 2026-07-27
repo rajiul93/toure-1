@@ -1,9 +1,9 @@
 'use client';
 
 import { IconCheck, IconChevronUp, IconX } from '@/components/icons';
+import { useSiteConfig } from '@/components/site-config/site-config-provider'
+import { useTourConfig } from '@/components/tour-config/tour-config-provider';
 import AvailabilityControl from './availability-control';
-import { LOUVRE_TOUR } from '@/lib/tour-schema';
-import { SITE } from '@/lib/site-config';
 import {
   startBokunCalendarWatch,
   type BokunCalendarPhase,
@@ -20,29 +20,30 @@ import { FaLock, FaStar } from 'react-icons/fa6';
 
 const DESKTOP_MIN_WIDTH = 1024;
 
-
-const TRUST_BADGES = [
-  {
-    label: SITE.booking.trustBadges[0].label,
-    icon: FaStar,
-    className: 'border-primary-muted bg-primary-soft text-primary-dark',
-    iconClassName: 'text-primary',
-  },
-  {
-    label: SITE.booking.trustBadges[1].label,
-    icon: FaLock,
-    className: 'border-sky-200 bg-sky-50 text-sky-800',
-    iconClassName: 'text-sky-600',
-  },
-] as const;
-
-const FEATURES = SITE.booking.features;
-
 export default function BookingForm({
   onExpandedChange,
 }: {
   onExpandedChange?: (expanded: boolean) => void;
 }) {
+  const site = useSiteConfig();
+  const { louvreTour } = useTourConfig();
+
+  const trustBadges = [
+    {
+      label: site.booking.trustBadges[0].label,
+      icon: FaStar,
+      className: 'border-primary-muted bg-primary-soft text-primary-dark',
+      iconClassName: 'text-primary',
+    },
+    {
+      label: site.booking.trustBadges[1].label,
+      icon: FaLock,
+      className: 'border-sky-200 bg-sky-50 text-sky-800',
+      iconClassName: 'text-sky-600',
+    },
+  ] as const;
+
+  const features = site.booking.features;
   const [loaderReady, setLoaderReady] = useState(false);
   const [phase, setPhase] = useState<BokunCalendarPhase>('idle');
   const [failure, setFailure] = useState<BokunFailureCause | null>(null);
@@ -157,7 +158,7 @@ export default function BookingForm({
     <>
     <div className="flex flex-col rounded-xl bg-white p-3 shadow ring-1 ring-black/5 sm:p-4">
       <Script
-        src={SITE.bokun.loaderUrl}
+        src={site.bokun.loaderUrl}
         strategy="lazyOnload"
         onReady={() => setLoaderReady(true)}
         onError={() => {
@@ -169,7 +170,7 @@ export default function BookingForm({
       {!expanded && (
         <>
           <div className="mb-3 flex items-center justify-between gap-2">
-            {TRUST_BADGES.map((badge) => {
+            {trustBadges.map((badge) => {
               const BadgeIcon = badge.icon
               return (
                 <span
@@ -186,7 +187,7 @@ export default function BookingForm({
           <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
             <p className="leading-none">
               <span className="text-3xl font-bold tracking-tight text-zinc-900">
-                {LOUVRE_TOUR.priceLabel}
+                {louvreTour.priceLabel}
               </span>
               <span className="ml-1 text-sm text-zinc-500">/ person</span>
             </p>
@@ -196,7 +197,7 @@ export default function BookingForm({
           </div>
 
           <ul className="mb-4 flex flex-nowrap gap-1">
-            {FEATURES.map((feature) => (
+            {features.map((feature) => (
               <li
                 key={feature}
                 className="flex min-w-0 flex-1 items-center gap-0.5 rounded-full bg-emerald-50 px-1 py-1 text-[10px] font-medium leading-tight text-emerald-700 sm:gap-1 sm:px-1.5 sm:text-xs"
@@ -245,19 +246,19 @@ export default function BookingForm({
           <div
             ref={widgetRef}
             className="bokunWidget min-h-[320px]"
-            data-src={SITE.bokun.calendarUrl}
+            data-src={site.bokun.calendarUrl}
           />
         </div>
       </div>
 
       <a
-        href={SITE.contact.whatsappUrl}
+        href={site.contact.whatsappUrl}
         target="_blank"
         rel="noopener noreferrer"
         className="mt-3 flex w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-success px-4 py-3 text-sm font-semibold text-success-foreground shadow-sm transition hover:bg-success-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success focus-visible:ring-offset-2"
       >
         <BsWhatsapp className="whatsapp-blink size-4 shrink-0" aria-hidden="true" />
-        Ask on WhatsApp
+        {site.contact.whatsappCtaLabel}
       </a>
 
       <noscript>
@@ -275,7 +276,7 @@ export default function BookingForm({
       >
         <div className="flex gap-2">
           <a
-            href={SITE.contact.whatsappUrl}
+            href={site.contact.whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-success text-success-foreground shadow-sm transition hover:bg-success-hover"

@@ -1,32 +1,38 @@
-import { BLOG_POSTS } from '@/lib/blog-posts'
+import { listMockBlogPosts } from '@/lib/blog-posts'
+import {
+  countPublishedBlogsInDB,
+  listPublicBlogPostsFromDB,
+} from '@/lib/services/blog.service'
+import { publicBlogListQuerySchema } from '@/lib/validations/public-blog.validation'
 import { NextRequest, NextResponse } from 'next/server'
 
-export type BlogPostListItem = {
-  slug: string
-  title: string
-  date: string
-  image: string
-}
+export type { BlogPostListItem, BlogPostListResult } from '@/lib/blog-posts'
 
 export async function GET(request: NextRequest) {
-  const search = request.nextUrl.searchParams.get('search')?.trim().toLowerCase() ?? ''
+  const parsed = publicBlogListQuerySchema.safeParse(
+    Object.fromEntries(request.nextUrl.searchParams.entries()),
+  )
 
-  let posts: BlogPostListItem[] = BLOG_POSTS.map(({ slug, title, date, image }) => ({
-    slug,
-    title,
-    date,
-    image,
-  })).sort((a, b) => b.date.localeCompare(a.date))
-
-  if (search) {
-    posts = posts.filter((post) => {
-      const source = BLOG_POSTS.find((item) => item.slug === post.slug)
-      if (!source) return false
-
-      const haystack = `${source.title} ${source.excerpt} ${source.category}`.toLowerCase()
-      return haystack.includes(search)
-    })
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message ?? 'Invalid query' },
+      { status: 400 },
+    )
   }
 
-  return NextResponse.json({ posts })
+  const { page, limit, search } = parsed.data
+
+  try {
+    const publishedCount = await countPublishedBlogsInDB()
+
+    if (publishedCount === 0) {
+      return NextResponse.json(listMockBlogPosts({ page, limit, search }))
+    }
+
+    const data = await listPublicBlogPostsFromDB({ page, limit, search })
+    return NextResponse.json(data)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to load blog posts'
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }
