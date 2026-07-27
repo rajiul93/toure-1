@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Day Tour (`day_tour1`)
 
-Day-tour booking site. Early stage: Bokun widget only; no auth, DB, or API yet.
+Louvre timed-entry booking site for **Day Tour Paris**. Public marketing pages + embedded **Bokun** calendar widget. Team auth via **Neon Auth** (admin/manager/marketer). Tour copy and reviews are static TypeScript data.
 
 ## Stack
 
@@ -13,30 +13,102 @@ Day-tour booking site. Early stage: Bokun widget only; no auth, DB, or API yet.
 - Package manager: **pnpm** (`pnpm dev` / `pnpm build` / `pnpm lint`)
 - Path alias: `@/*` → `./src/*`
 - React Compiler enabled in `next.config.ts` (avoid unnecessary `useMemo`/`useCallback`)
+- **framer-motion** — mobile nav animations
+- **leaflet** — meeting-point map on home
+- **react-icons** — icon set alongside local SVG icons in `src/components/icons.tsx`
+
+## Routes
+
+| Path | Notes |
+|------|--------|
+| `/` | Home — banner, tour sections, booking sidebar in grid |
+| `/about-us` | About page; booking sidebar **hidden** (still mounted) |
+| `/blog`, `/blog/[slug]` | Static blog posts from `src/lib/blog-posts.ts` |
+| `/reviews` | Filterable reviews from `src/lib/reviews-data.ts` |
+| `/attraction-tours` | Tour listing from `src/lib/tour-schema.ts` |
+| `/auth/sign-in` | Team login (no public sign-up) |
+| `/admin/*` | Admin dashboard + user management (`admin` role) |
+| `/manager/*` | Manager dashboard (`manager` role) |
+| `/marketer/*` | Marketer dashboard (`marketer` role) |
+| `/legal/*` | Linked in footer via `SITE.legal` — **routes not implemented yet** |
+
+Route group `(public)` does not change URLs. Put future private/admin routes in new groups, e.g. `(auth)`, `(admin)`.
 
 ## Structure
 
 ```
-src/app/
-  layout.tsx          # Root layout, Geist fonts, metadata
-  globals.css         # Tailwind + CSS variables
-  (public)/
-    layout.tsx        # Public route group wrapper
-    page.tsx          # Home — Bokun booking widget (client)
+src/
+  app/
+    layout.tsx              # Root: Manrope + Pinyon Script, metadata, Bokun preconnect, LCP preload
+    globals.css             # Theme tokens, booking animations, Bokun cart hide, map z-index
+    sitemap.ts / robots.ts
+    (public)/
+      layout.tsx            # Navbar, BookingLayoutProvider, PublicPageShell, Footer
+      page.tsx              # Home → Hero
+      about-us/page.tsx
+      attraction-tours/page.tsx
+      blog/page.tsx, blog/[slug]/page.tsx
+      reviews/page.tsx
+      home/                 # Home-only sections + booking-form.tsx
+  components/
+    booking-sidebar.tsx     # `<aside id="book">` wrapper around BookingForm
+    booking-layout-context.tsx  # Persistent sidebar + expanded-state bridge to Hero banner
+    public-page-shell.tsx   # 6-col grid; single PersistentBookingSidebar instance
+    navbar.tsx, footer.tsx, page-hero.tsx, …
+  lib/
+    site-config.ts          # SITE brand, contact, Bokun URLs, legal/footer links
+    tour-schema.ts          # LOUVRE_TOUR, FAQ, itinerary-related exports
+    bokun-ready.ts          # Calendar readiness watcher (iframe, postMessage, ResizeObserver)
+    open-booking.ts         # Scroll-to-#book + BOOKING_OPEN_EVENT
+    blog-posts.ts, reviews-data.ts, home-sections.ts, metadata.ts, …
+  hooks/
+    use-nav-active.ts
+public/
+  images/banner/            # Hero gallery (long-cache headers in next.config.ts)
+  llms.txt                  # LLM-oriented site summary
 ```
 
-- Route group `(public)` does not change URLs (`/` = home).
-- Put future private/admin routes in new groups, e.g. `(auth)`, `(admin)`.
+## Layout & booking architecture
 
-## Current product
+**Single booking instance across navigation** — avoids Bokun reload when moving Home ↔ Blog/Reviews:
 
-- Home loads Bokun Widgets Loader with booking channel UUID in `src/app/(public)/page.tsx`.
-- Prefer `next/script` (public API), not `next/dist/client/script`.
-- Keep secrets and channel IDs in env vars when adding more integrations.
+1. `(public)/layout.tsx` wraps content in `BookingLayoutProvider` + `PublicPageShell`.
+2. `PublicPageShell` always mounts `PersistentBookingSidebar` in a grid wrapper (`lg:col-span-2 lg:col-start-5 …`). Grid placement lives on the **wrapper div**, not the inner `<aside>`.
+3. Home `hero.tsx` renders only grid children (banner + sections); it does **not** render its own sidebar.
+4. `/about-us`: sidebar wrapper gets `hidden` + `aria-hidden` — component stays mounted so calendar state survives return visits.
+5. `useBookingExpandedHandler` in Hero locks banner height on desktop when the calendar expands.
+
+**Booking UI** (`home/booking-form.tsx` + `availability-control.tsx`):
+
+- Bokun loader via `next/script` (`strategy="lazyOnload"`) — prefer public `next/script`, not `next/dist/client/script`.
+- Widget preloads **in-card** while collapsed: real height, `opacity-0`, `clip-path:inset(0 0 100% 0)` (not off-screen translate).
+- `startBokunCalendarWatch()` in `bokun-ready.ts` drives phases: `idle` → `loading` → `delayed` (6.5s) → `ready` | `failed` (18s).
+- `AvailabilityControl` is shared by sidebar CTA and mobile sticky bar (WhatsApp + Check availability).
+- Retry on failure = full page reload (Bokun re-init alone does not recover reliably).
+- `openBookingCalendar()` scrolls to `#book` and dispatches `BOOKING_OPEN_EVENT`.
+
+## Team auth (Neon Auth)
+
+- **Managed Better Auth** via `@neondatabase/auth` — users in Neon Postgres `neon_auth` schema.
+- **No public sign-up** — admin creates users at `/admin/users` (`auth.admin.createUser` + `setRole`).
+- **Roles:** `admin`, `manager`, `marketer` — each has a **left sidebar** dashboard (`DashboardShell` + `DashboardSidebar`).
+- **Login:** `/auth/sign-in` → redirect to role home (`/admin`, `/manager`, `/marketer`).
+- **Route protection:** `proxy.ts` (project root; auth middleware matcher) + `requireRole()` in `(dashboard)/*/layout.tsx`.
+- **Bootstrap:** `pnpm seed:admin` (then promote role in Neon SQL if needed).
+- Booking stays on **Bokun** — auth is separate from checkout.
+
+## Config & content
+
+- **Env vars** (see `.env.example`): `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_WHATSAPP_NUMBER`, `NEXT_PUBLIC_BOKUN_*`, `NEON_AUTH_BASE_URL`, `NEON_AUTH_COOKIE_SECRET`.
+- **Single source of truth**: edit brand, Bokun URLs, about copy, legal/footer links in `src/lib/site-config.ts`.
+- Tour facts, pricing, FAQ, schema: `src/lib/tour-schema.ts`.
+- Page metadata helper: `src/lib/metadata.ts` (`createPageMetadata`).
 
 ## Conventions
 
-- Prefer Server Components; add `'use client'` only when needed.
-- Match existing Tailwind utility style; theme tokens live in `globals.css`.
+- Prefer Server Components; add `'use client'` only when needed (booking, nav, maps, filters).
+- Match existing Tailwind utility style; theme tokens live in `globals.css` (`--primary`, `--heading`, etc.).
+- Icons: local `Icon*` components for a11y-critical UI; `react-icons` for decorative/brand icons.
 - Do not invent auth/DB/payment layers unless the user asks.
-- Update this rule when routes, domains, or stack change.
+- Keep Bokun channel/experience IDs in env vars, not hardcoded in components.
+- Update this rule when routes, booking flow, or stack change.

@@ -44,6 +44,15 @@ export function IconChevronRight({ className, ...props }: IconProps) {
   )
 }
 
+export function IconSearch({ className, ...props }: IconProps) {
+  return (
+    <IconBase className={className} stroke="currentColor" strokeWidth="1.75" {...props}>
+      <circle cx="9" cy="9" r="5.25" />
+      <path strokeLinecap="round" d="M13.5 13.5 17 17" />
+    </IconBase>
+  )
+}
+
 export function IconCalendar({ className, ...props }: IconProps) {
   return (
     <IconBase className={className} stroke="currentColor" strokeWidth="1.5" {...props}>

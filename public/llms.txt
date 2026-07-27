@@ -9,10 +9,15 @@
 - Price: from €32 per person
 - Rating: 4.2 out of 5 (9,594 reviews)
 - Duration: approx. 2.5–3 hours self-guided visit
+- Support: WhatsApp (number configured in site env)
 
-## Key page
+## Pages
 
-- / — Book Louvre timed entry, view itinerary, meeting point, inclusions, and traveler reviews
+- / — Book Louvre timed entry; itinerary, meeting point, inclusions, FAQ, reviews
+- /about-us — About Day Tour Paris
+- /blog — Louvre travel tips and planning articles
+- /reviews — Filterable traveler reviews
+- /attraction-tours — Paris museum tour listings (Louvre featured)
 
 ## Topics covered
 
@@ -31,4 +36,4 @@
 
 ## Booking
 
-Use the live availability calendar on the homepage to select a date and time before payment.
+Use the live availability calendar on the homepage (or the persistent sidebar on other pages) to select a date and time before payment. Booking is powered by Bokun.
