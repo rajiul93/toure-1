@@ -1,5 +1,5 @@
 import { dayjs, parseInputDate } from '@/lib/dayjs'
-import { sanitizeBlogHtml } from '@/lib/blog-article-html'
+import { sanitizeBlogHtmlForSave } from '@/lib/blog-sanitize.server'
 import { repairBlogRecordInDBIfNeeded } from '@/lib/blog-html-repair'
 import { prisma } from '@/lib/db'
 import { registerImageUsageInDB } from '@/lib/services/image.service'
@@ -18,7 +18,11 @@ function fromDbPublishStatus(status: PublishStatus): BlogPublishStatus {
   return status === 'PUBLISH' ? 'publish' : 'draft'
 }
 
-function mapFormToBlogFields(values: BlogFormValues): Omit<Prisma.BlogCreateInput, 'faqs' | 'isDeleted'> {
+async function mapFormToBlogFields(
+  values: BlogFormValues,
+): Promise<Omit<Prisma.BlogCreateInput, 'faqs' | 'isDeleted'>> {
+  const description = await sanitizeBlogHtmlForSave(values.basic_info.description)
+
   return {
     blogDate: parseInputDate(values.basic_info.blog_date).toDate(),
     publishDate: parseInputDate(values.basic_info.publish_date).toDate(),
@@ -31,7 +35,7 @@ function mapFormToBlogFields(values: BlogFormValues): Omit<Prisma.BlogCreateInpu
     title: values.basic_info.title,
     slug: values.basic_info.slug,
     shortDescription: values.basic_info.short_description,
-    description: sanitizeBlogHtml(values.basic_info.description),
+    description,
     featuredImageUrl: values.basic_info.featured_image.url,
     featuredImageAlt: values.basic_info.featured_image.alt_text,
     isFeatured: values.basic_info.is_featured,
@@ -46,12 +50,14 @@ function mapFormToBlogFields(values: BlogFormValues): Omit<Prisma.BlogCreateInpu
   }
 }
 
-function mapFaqsToCreate(values: BlogFormValues) {
-  return values.faqs.map((faq, index) => ({
-    question: faq.question,
-    answer: sanitizeBlogHtml(faq.answer),
-    sortOrder: index,
-  }))
+async function mapFaqsToCreate(values: BlogFormValues) {
+  return Promise.all(
+    values.faqs.map(async (faq, index) => ({
+      question: faq.question,
+      answer: await sanitizeBlogHtmlForSave(faq.answer),
+      sortOrder: index,
+    })),
+  )
 }
 
 export function blogToFormValues(blog: BlogWithFaqs): BlogFormValues {
@@ -378,10 +384,10 @@ export async function createBlogInDB(values: BlogFormValues) {
 
   const blog = await prisma.blog.create({
     data: {
-      ...mapFormToBlogFields(values),
+      ...(await mapFormToBlogFields(values)),
       isDeleted: false,
       faqs: {
-        create: mapFaqsToCreate(values),
+        create: await mapFaqsToCreate(values),
       },
     },
     include: {
@@ -426,9 +432,9 @@ export async function updateBlogInDB(id: string, values: BlogFormValues) {
     return tx.blog.update({
       where: { id },
       data: {
-        ...mapFormToBlogFields(values),
+        ...(await mapFormToBlogFields(values)),
         faqs: {
-          create: mapFaqsToCreate(values),
+          create: await mapFaqsToCreate(values),
         },
       },
       include: {

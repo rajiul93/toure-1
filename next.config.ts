@@ -24,6 +24,8 @@ const r2ImageRemotePattern = getR2ImageRemotePattern();
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
+  // isomorphic-dompurify → jsdom pulls ESM-only deps; keep them external on Vercel.
+  serverExternalPackages: ['isomorphic-dompurify', 'jsdom'],
   experimental: {
     optimizePackageImports: ['react-icons', 'framer-motion'],
   },
