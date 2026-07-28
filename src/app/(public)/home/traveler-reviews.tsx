@@ -5,6 +5,7 @@ import {
   IconChevronRight,
   IconStar,
 } from '@/components/icons'
+import ReviewDate from '@/components/review-date'
 import ReviewFilterChips from '@/components/review-filter-chips'
 import ReviewStars from '@/components/review-stars'
 import type { ResolvedTourConfig } from '@/lib/tour-config.types'
@@ -46,10 +47,15 @@ function useScrollEdges(
     if (!el) return
 
     const maxScroll = el.scrollWidth - el.clientWidth
-    setEdges({
+    const next = {
       left: el.scrollLeft > 4,
       right: maxScroll > 4 && el.scrollLeft < maxScroll - 4,
-    })
+    }
+    // Compare before setting: a fresh object every scroll event never bails out
+    // of re-rendering, so the whole reviews section re-rendered each frame.
+    setEdges((current) =>
+      current.left === next.left && current.right === next.right ? current : next,
+    )
   }, [ref])
 
   useEffect(() => {
@@ -170,7 +176,9 @@ export default function TravelerReviews({
           ref={cardScrollRef}
           role="list"
           aria-label="Traveler reviews"
-          className={`scrollbar-none flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain [-webkit-overflow-scrolling:touch] ${cardEdges.left ? 'pl-10' : ''} ${cardEdges.right ? 'pr-10' : ''}`}
+          // Focusable so keyboard users can reach reviews past the first card.
+          tabIndex={0}
+          className={`scrollbar-none flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 [-webkit-overflow-scrolling:touch] ${cardEdges.left ? 'pl-10' : ''} ${cardEdges.right ? 'pr-10' : ''}`}
         >
           {filteredReviews.length === 0 ? (
             <p className="py-8 text-sm text-zinc-500" role="status">
@@ -188,7 +196,7 @@ export default function TravelerReviews({
                 <p className="mt-3 text-sm text-zinc-500">
                   <span className="font-medium text-zinc-700">{review.author}</span>
                   <span aria-hidden="true"> • </span>
-                  <time>{review.date}</time>
+                  <ReviewDate value={review.date} />
                 </p>
 
                 <p className="mt-3 line-clamp-5 text-sm leading-relaxed text-zinc-800">

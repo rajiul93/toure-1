@@ -17,6 +17,7 @@ import {
   type QuillImageSettings,
 } from '@/lib/quill/quill-image-settings'
 import { uploadEditorImage } from '@/lib/quill/upload-editor-image'
+import { useModalBehavior } from '@/hooks/use-modal-behavior'
 import { useEffect, useRef, useState } from 'react'
 import Quill from 'quill'
 import 'quill/dist/quill.snow.css'
@@ -116,12 +117,24 @@ function ImageSettingsDialog({
   isSubmitting?: boolean
   errorMessage?: string | null
 }) {
+  const dialogRef = useRef<HTMLDivElement>(null)
+
+  // Escape to cancel, focus trap, focus restore and scroll lock — previously
+  // Tab escaped straight into the blog form behind the overlay.
+  useModalBehavior({ open: true, containerRef: dialogRef, onClose: onCancel })
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      onClick={onCancel}
+    >
       <div
+        ref={dialogRef}
         className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-5 shadow-xl"
         role="dialog"
+        aria-modal="true"
         aria-labelledby="quill-image-settings-title"
+        onClick={(event) => event.stopPropagation()}
       >
         <h4 id="quill-image-settings-title" className="text-base font-bold text-heading">
           {mode === 'insert' ? 'Insert image' : 'Image settings'}
@@ -331,6 +344,10 @@ export default function QuillEditor({
 
     return () => {
       editor.root.removeEventListener('click', handleImageClick)
+      // Detach Quill's own handlers too — wiping innerHTML alone left the
+      // `text-change` listener (and TableUp's document listeners) alive, so
+      // every remount leaked another editor instance.
+      editor.off('text-change')
       quillRef.current = null
       wrapper.innerHTML = ''
     }

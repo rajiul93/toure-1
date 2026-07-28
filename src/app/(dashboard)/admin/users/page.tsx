@@ -1,8 +1,11 @@
 import AdminUsersClient from '@/app/(dashboard)/admin/users/admin-users-client'
 import { listUsersFromDB } from '@/lib/services/user.service'
-import { createPageMetadata } from '@/lib/metadata'
+import { createPrivatePageMetadata } from '@/lib/metadata'
 
-export const metadata = createPageMetadata({
+// Page metadata overrides the layout's, so this must be the private variant —
+// `createPageMetadata` inherits `robots.index: true` from the site SEO defaults
+// and would advertise the user list as indexable.
+export const metadata = createPrivatePageMetadata({
   title: 'Users',
   description: 'Manage Day Tour Paris team accounts.',
   path: '/admin/users',

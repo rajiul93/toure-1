@@ -1,4 +1,5 @@
 import { getSiteUrl } from '@/lib/site-config'
+import { serializeJsonLd } from '@/lib/json-ld'
 import type { LegalPageContent } from '@/lib/legal-pages'
 
 export default function LegalStructuredData({ page }: { page: LegalPageContent }) {
@@ -43,7 +44,7 @@ export default function LegalStructuredData({ page }: { page: LegalPageContent }
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
     />
   )
 }

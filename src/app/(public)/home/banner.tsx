@@ -5,6 +5,7 @@ import type { BannerPhoto } from '@/lib/tour-config.types'
 import { useState } from 'react'
 import BannerPhotoLightbox from './banner-photo-lightbox'
 import BannerSlider from './banner-slider'
+import { BANNER_FEATURED_SIZES, BANNER_TILE_SIZES } from './banner-image-sizes'
 
 function PhotoBadge({ label }: { label: string }) {
   return (
@@ -67,7 +68,7 @@ function BannerTablet({
         <BannerPhotoButton
           photo={featured}
           onSelect={onPhotoSelect}
-          sizes="60vw"
+          sizes={BANNER_FEATURED_SIZES}
           priority
           className="h-full min-h-0"
         />
@@ -75,10 +76,10 @@ function BannerTablet({
 
       <div className="col-span-2 flex min-h-0 flex-col gap-2.5">
         <div className="relative min-h-0 flex-1">
-          <BannerPhotoButton photo={second} onSelect={onPhotoSelect} sizes="40vw" className="h-full min-h-0" />
+          <BannerPhotoButton photo={second} onSelect={onPhotoSelect} sizes={BANNER_TILE_SIZES} className="h-full min-h-0" />
         </div>
         <div className="relative min-h-0 flex-1">
-          <BannerPhotoButton photo={third} onSelect={onPhotoSelect} sizes="40vw" className="h-full min-h-0" />
+          <BannerPhotoButton photo={third} onSelect={onPhotoSelect} sizes={BANNER_TILE_SIZES} className="h-full min-h-0" />
         </div>
       </div>
     </div>
@@ -100,7 +101,7 @@ function BannerGrid({
         <BannerPhotoButton
           photo={featured}
           onSelect={onPhotoSelect}
-          sizes="50vw"
+          sizes={BANNER_FEATURED_SIZES}
           priority
           className="h-full min-h-0"
         />
@@ -108,7 +109,7 @@ function BannerGrid({
 
       {tiles.map((photo) => (
         <div key={photo.src} className="relative min-h-0">
-          <BannerPhotoButton photo={photo} onSelect={onPhotoSelect} sizes="25vw" className="h-full min-h-0" />
+          <BannerPhotoButton photo={photo} onSelect={onPhotoSelect} sizes={BANNER_TILE_SIZES} className="h-full min-h-0" />
         </div>
       ))}
     </div>
@@ -117,6 +118,10 @@ function BannerGrid({
 
 export default function Banner({ bannerPhotos }: { bannerPhotos: BannerPhoto[] }) {
   const [lightboxPhoto, setLightboxPhoto] = useState<BannerPhoto | null>(null)
+
+  // The tablet and grid layouts destructure three photos and read `.src` on
+  // each; a tour config saved with fewer would crash the whole page.
+  if (bannerPhotos.length < 3) return null
 
   return (
     <>

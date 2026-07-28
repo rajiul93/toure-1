@@ -107,7 +107,12 @@ function ItineraryAccordionItem({
         <div
           id={panelId}
           role="region"
+          aria-label={stop.title}
+          // `aria-hidden` alone left the "Open in Google Maps" link focusable,
+          // so keyboard users tabbed into a collapsed, screen-reader-hidden
+          // panel. `inert` removes it from both the tab order and the a11y tree.
           aria-hidden={!open}
+          inert={!open}
           className="overflow-hidden transition-[height] duration-300 ease-in-out motion-reduce:transition-none"
           style={{ height: open ? height : 0 }}
         >

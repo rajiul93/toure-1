@@ -1,4 +1,5 @@
 import { getSiteUrl } from '@/lib/site-config'
+import { serializeJsonLd } from '@/lib/json-ld'
 import type { ResolvedSiteConfig } from '@/lib/site-config.types'
 import type { ResolvedSiteSeoConfig } from '@/lib/site-seo.types'
 import type { ResolvedTourConfig } from '@/lib/tour-config.types'
@@ -168,7 +169,7 @@ export function renderJsonLd(graph: Record<string, unknown>[]) {
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{
-        __html: JSON.stringify({
+        __html: serializeJsonLd({
           '@context': 'https://schema.org',
           '@graph': graph,
         }),

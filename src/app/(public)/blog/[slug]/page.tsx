@@ -8,13 +8,14 @@ import {
 import { BLOG_POSTS } from '@/lib/blog-posts'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { connection } from 'next/server'
 
 type Props = { params: Promise<{ slug: string }> }
 
-/** CMS edits must show immediately — do not serve stale SSG HTML after admin save. */
-export const dynamic = 'force-dynamic'
-
+/**
+ * Prerendered. CMS edits still appear immediately because every read below is
+ * tagged (`blog-posts` / `blog-<slug>`) and `revalidateBlogPaths` flushes those
+ * tags on save — no `force-dynamic` needed, so navigation stays prefetched.
+ */
 export const dynamicParams = true
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -29,7 +30,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function BlogPostPage({ params }: Props) {
-  await connection()
   const { slug } = await params
   const [post, relatedPosts] = await Promise.all([
     resolveBlogPostBySlug(slug),

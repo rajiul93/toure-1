@@ -2,8 +2,9 @@
 
 import { IconClose } from '@/components/icons'
 import type { BannerPhoto } from '@/lib/tour-config.types'
+import { useModalBehavior } from '@/hooks/use-modal-behavior'
 import Image from 'next/image'
-import { useEffect } from 'react'
+import { useRef } from 'react'
 
 type BannerPhotoLightboxProps = {
   photo: BannerPhoto | null
@@ -11,37 +12,28 @@ type BannerPhotoLightboxProps = {
 }
 
 export default function BannerPhotoLightbox({ photo, onClose }: BannerPhotoLightboxProps) {
-  useEffect(() => {
-    if (!photo) return
+  const containerRef = useRef<HTMLDivElement>(null)
 
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') onClose()
-    }
-
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    document.addEventListener('keydown', handleKeyDown)
-
-    return () => {
-      document.body.style.overflow = previousOverflow
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [photo, onClose])
+  // Escape, focus trap, focus restore and scroll lock.
+  useModalBehavior({ open: Boolean(photo), containerRef, onClose })
 
   if (!photo) return null
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-8"
+      ref={containerRef}
+      className="fixed inset-0 z-200 flex items-center justify-center p-4 sm:p-8"
       role="dialog"
       aria-modal="true"
       aria-label={photo.alt}
     >
-      <button
-        type="button"
+      {/* Backdrop: a div, not a button. As a button it became the first tab
+          stop — a giant invisible control — and screen readers announced two
+          separate close actions. Escape and the visible Close button remain. */}
+      <div
         className="absolute inset-0 bg-black/85"
-        aria-label="Close photo preview"
         onClick={onClose}
+        aria-hidden="true"
       />
 
       <figure className="relative z-10 flex max-h-[min(90vh,900px)] w-full max-w-5xl flex-col">

@@ -4,9 +4,16 @@ import { BLOG_POST_BODY, getBlogPost, BLOG_POSTS } from '@/lib/blog-posts'
 import {
   repairBlogRecordInDBIfNeeded,
 } from '@/lib/blog-html-repair'
+import { BLOG_POSTS_TAG, blogSlugTag } from '@/lib/blog-revalidation'
 import { dayjs } from '@/lib/dayjs'
 import { prisma } from '@/lib/db'
-import { countPublishedBlogsInDB, getRelatedBlogPostsFromDB } from '@/lib/services/blog.service'
+import {
+  countPublishedBlogsInDB,
+  getRelatedBlogPostsFromDB,
+  listPublicBlogPostsFromDB,
+} from '@/lib/services/blog.service'
+import { unstable_cache } from 'next/cache'
+import { cache } from 'react'
 
 const DEFAULT_BLOG_IMAGE = '/images/banner/0.webp'
 
@@ -124,24 +131,73 @@ export async function getPublishedBlogBySlugFromDB(slug: string): Promise<Public
   return mapBlogRecordToPublicDetail(repairedBlog)
 }
 
-export async function resolveBlogPostBySlug(slug: string): Promise<PublicBlogDetail | null> {
-  const publishedCount = await countPublishedBlogsInDB()
+/**
+ * Cross-request cache, invalidated by `revalidateBlogPaths` on any admin blog
+ * mutation. Tagged with both the global list tag and this post's own tag so a
+ * single-post edit doesn't have to flush every other post.
+ *
+ * The lazy blob-URL repair inside `getPublishedBlogBySlugFromDB` writes to the
+ * DB; keeping it here means it runs at most once per cache miss instead of on
+ * every page view.
+ */
+function getCachedBlogBySlug(slug: string) {
+  return unstable_cache(
+    () => getPublishedBlogBySlugFromDB(slug),
+    ['published-blog-by-slug', slug],
+    { tags: [BLOG_POSTS_TAG, blogSlugTag(slug)] },
+  )()
+}
+
+const getCachedPublishedCount = unstable_cache(
+  () => countPublishedBlogsInDB(),
+  ['published-blog-count'],
+  { tags: [BLOG_POSTS_TAG] },
+)
+
+/**
+ * First page of the public listing, used to render `/blog` on the server.
+ * Deliberately only the default page — search and pagination stay client-side
+ * through `/api/blog`, so arbitrary user input never becomes a cache key.
+ */
+export const getCachedBlogListing = unstable_cache(
+  () => listPublicBlogPostsFromDB({ page: 1, limit: 12 }),
+  ['public-blog-listing', 'page-1'],
+  { tags: [BLOG_POSTS_TAG] },
+)
+
+function getCachedRelatedPosts(excludeSlug: string, limit: number) {
+  return unstable_cache(
+    () => getRelatedBlogPostsFromDB(excludeSlug, limit),
+    ['related-blog-posts', excludeSlug, String(limit)],
+    { tags: [BLOG_POSTS_TAG] },
+  )()
+}
+
+/**
+ * `cache()` dedupes within a single request: `generateMetadata` and the page
+ * body both resolve the same post, which previously issued the whole query set
+ * twice.
+ */
+export const resolveBlogPostBySlug = cache(async function resolveBlogPostBySlug(
+  slug: string,
+): Promise<PublicBlogDetail | null> {
+  const publishedCount = await getCachedPublishedCount()
 
   if (publishedCount > 0) {
-    return getPublishedBlogBySlugFromDB(slug)
+    return getCachedBlogBySlug(slug)
   }
 
   return getMockBlogDetail(slug)
-}
+})
 
-export async function resolveRelatedBlogPosts(
+export const resolveRelatedBlogPosts = cache(async function resolveRelatedBlogPosts(
   excludeSlug: string,
   limit = 12,
 ): Promise<PublicRelatedBlogPost[]> {
-  const publishedCount = await countPublishedBlogsInDB()
+  const publishedCount = await getCachedPublishedCount()
 
   if (publishedCount > 0) {
-    return getRelatedBlogPostsFromDB(excludeSlug, limit)
+    return getCachedRelatedPosts(excludeSlug, limit)
   }
 
   return BLOG_POSTS.filter((post) => post.slug !== excludeSlug)
@@ -153,7 +209,7 @@ export async function resolveRelatedBlogPosts(
       image: post.image,
       categoryLabel: post.category,
     }))
-}
+})
 
 export function mapBlogRecordToPublicDetail(blog: {
   slug: string

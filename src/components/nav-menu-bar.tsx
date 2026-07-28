@@ -58,7 +58,11 @@ function NavMenuItem({ href, label, active }: NavMenuItemProps) {
             {label}
           </motion.span>
 
+          {/* Purely the back face of the flip animation — the same text is
+              already announced by the span above, so hide this copy or every
+              nav item reads as "Blog Blog, link". */}
           <motion.span
+            aria-hidden="true"
             className={`absolute inset-0 z-10 flex items-center px-3 py-2 text-sm ${textClass}`}
             variants={backVariants}
             transition={sharedTransition}

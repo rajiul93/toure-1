@@ -1,4 +1,5 @@
 import { getSiteUrl } from '@/lib/site-config'
+import { serializeJsonLd } from '@/lib/json-ld'
 import { loadPublicConfigWithFallback } from '@/lib/public-config'
 import { REVIEWS } from '@/lib/reviews-data'
 
@@ -47,7 +48,7 @@ export default async function ReviewsStructuredData() {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
     />
   )
 }

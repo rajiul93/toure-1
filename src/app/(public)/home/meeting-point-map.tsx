@@ -134,8 +134,13 @@ export default function MeetingPointMap({
     <div
       ref={containerRef}
       className="meeting-point-map relative isolate z-0 h-full min-h-[280px] w-full rounded-2xl sm:min-h-[360px]"
+      // Not `role="img"`: that collapsed the whole Leaflet subtree into one
+      // node, hiding the zoom controls, marker popups and the OSM attribution
+      // link from assistive tech. `group` keeps it labelled while leaving the
+      // interactive children reachable. The stop list above is the text
+      // equivalent for anyone who cannot use the map.
+      role="group"
       aria-label="Tour route map"
-      role="img"
     />
   )
 }

@@ -5,6 +5,7 @@ import { IconClose, IconMenu } from '@/components/icons'
 import NavMenuBar from '@/components/nav-menu-bar'
 import { useSiteConfig } from '@/components/site-config/site-config-provider'
 import { useNavActive } from '@/hooks/use-nav-active'
+import { lockBodyScroll } from '@/hooks/use-modal-behavior'
 import { NAV_LINKS } from '@/lib/nav-links'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -35,11 +36,18 @@ export default function Navbar() {
       return () => cancelAnimationFrame(frame)
     }
 
+    // Both timers must be captured: the inner one used to leak, so a rapid
+    // open → close → open could unmount the drawer mid-open-animation.
+    let hideId: number | undefined
     const id = window.setTimeout(() => {
       setIsAnimating(false)
-      window.setTimeout(() => setIsVisible(false), 300)
+      hideId = window.setTimeout(() => setIsVisible(false), 300)
     }, 0)
-    return () => window.clearTimeout(id)
+
+    return () => {
+      window.clearTimeout(id)
+      if (hideId !== undefined) window.clearTimeout(hideId)
+    }
   }, [open])
 
   useEffect(() => {
@@ -49,11 +57,13 @@ export default function Navbar() {
       if (event.key === 'Escape') setOpen(false)
     }
 
-    document.body.style.overflow = 'hidden'
+    // Restores the previous value instead of clearing it — closing the drawer
+    // used to wipe the photo lightbox's scroll lock when both were open.
+    const releaseScroll = lockBodyScroll()
     window.addEventListener('keydown', onKeyDown)
 
     return () => {
-      document.body.style.overflow = ''
+      releaseScroll()
       window.removeEventListener('keydown', onKeyDown)
     }
   }, [open])

@@ -2,6 +2,7 @@
 
 import type { BannerPhoto } from '@/lib/tour-config.types'
 import Image from 'next/image'
+import { BANNER_FEATURED_SIZES, BANNER_TILE_SIZES } from './banner-image-sizes'
 
 function PhotoBadge({ label }: { label: string }) {
   return (
@@ -32,7 +33,7 @@ export default function BannerSlider({ bannerPhotos, onPhotoSelect }: BannerSlid
           alt={featured.alt}
           fill
           priority
-          sizes="100vw"
+          sizes={BANNER_FEATURED_SIZES}
           className="object-cover"
         />
         <PhotoBadge label={featured.label} />
@@ -59,7 +60,7 @@ export default function BannerSlider({ bannerPhotos, onPhotoSelect }: BannerSlid
               alt={photo.alt}
               fill
               loading={i === 0 ? 'eager' : 'lazy'}
-              sizes="42vw"
+              sizes={BANNER_TILE_SIZES}
               className="object-cover"
             />
             <PhotoBadge label={photo.label} />

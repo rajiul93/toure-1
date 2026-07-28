@@ -1,4 +1,5 @@
 import { getSiteUrl } from '@/lib/site-config'
+import { serializeJsonLd } from '@/lib/json-ld'
 import type { PublicBlogDetail } from '@/lib/blog-detail'
 import { getSiteConfigFromDB } from '@/lib/services/site-settings.service'
 import { getSiteSeoFromDB } from '@/lib/services/site-seo.service'
@@ -84,7 +85,7 @@ export default async function BlogArticleStructuredData({
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{
-        __html: JSON.stringify({
+        __html: serializeJsonLd({
           '@context': 'https://schema.org',
           '@graph': graph,
         }),

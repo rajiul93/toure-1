@@ -1,5 +1,6 @@
 'use client'
 
+import ReviewDate from '@/components/review-date'
 import ReviewFilterChips from '@/components/review-filter-chips'
 import ReviewStars from '@/components/review-stars'
 import PageHero from '@/components/page-hero'
@@ -76,7 +77,7 @@ export default function ReviewsPageContent() {
                 <article className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
                   <div className="flex items-center justify-between gap-2">
                     <ReviewStars rating={review.rating} />
-                    <time className="text-xs text-zinc-400">{review.date}</time>
+                    <ReviewDate value={review.date} className="text-xs text-zinc-400" />
                   </div>
 
                   <p className="mt-3 text-sm font-semibold text-heading">{review.author}</p>

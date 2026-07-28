@@ -3,7 +3,13 @@
 import { galleryFieldKey } from '@/lib/blog-gallery'
 import type { BlogGalleryImageValues } from '@/lib/validations/blog-form.validation'
 import { useState } from 'react'
-import { FaGripVertical, FaPlus, FaTrash } from 'react-icons/fa6'
+import {
+  FaChevronDown,
+  FaChevronUp,
+  FaGripVertical,
+  FaPlus,
+  FaTrash,
+} from 'react-icons/fa6'
 
 type BlogGalleryFieldProps = {
   items: BlogGalleryImageValues[]
@@ -95,23 +101,49 @@ export default function BlogGalleryField({
                       : 'border-zinc-200'
                 }`}
               >
-                <div className="flex shrink-0 flex-col items-center gap-2 pt-1">
+                <div className="flex shrink-0 flex-col items-center gap-1 pt-1">
+                  <button
+                    type="button"
+                    aria-label={`Move image ${index + 1} up`}
+                    disabled={index === 0}
+                    onClick={() => onReorder(index, index - 1)}
+                    className="rounded-lg p-1 text-zinc-400 transition hover:bg-white hover:text-zinc-600 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent"
+                  >
+                    <FaChevronUp className="size-3" aria-hidden="true" />
+                  </button>
+
                   <button
                     type="button"
                     draggable
-                    aria-label={`Drag image ${index + 1}`}
+                    aria-label={`Drag image ${index + 1} to reorder`}
                     className="cursor-grab rounded-lg p-1.5 text-zinc-400 transition hover:bg-white hover:text-zinc-600 active:cursor-grabbing"
                     onDragStart={(event) => {
                       setDragIndex(index)
                       event.dataTransfer.effectAllowed = 'move'
+                      // Firefox refuses to start a drag unless data is set, so
+                      // without this the whole reorder silently did nothing there.
+                      event.dataTransfer.setData('text/plain', String(index))
                     }}
                     onDragEnd={finishDrag}
                   >
                     <FaGripVertical className="size-4" aria-hidden="true" />
                   </button>
+
                   <span className="inline-flex min-w-7 items-center justify-center rounded-full bg-white px-2 py-0.5 text-xs font-bold text-heading ring-1 ring-zinc-200">
                     {index + 1}
                   </span>
+
+                  {/* Dragging is mouse-only; these give keyboard and screen
+                      reader users a way to reorder at all. */}
+                  <button
+                    type="button"
+                    aria-label={`Move image ${index + 1} down`}
+                    disabled={index === items.length - 1}
+                    onClick={() => onReorder(index, index + 1)}
+                    className="rounded-lg p-1 text-zinc-400 transition hover:bg-white hover:text-zinc-600 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent"
+                  >
+                    <FaChevronDown className="size-3" aria-hidden="true" />
+                  </button>
                 </div>
 
                 <div className="min-w-0 flex-1">
