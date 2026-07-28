@@ -1,8 +1,10 @@
 import dayjs from 'dayjs'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
+import relativeTime from 'dayjs/plugin/relativeTime'
 import utc from 'dayjs/plugin/utc'
 
 dayjs.extend(customParseFormat)
+dayjs.extend(relativeTime)
 dayjs.extend(utc)
 
 export const DATE_INPUT_FORMAT = 'YYYY-MM-DD'
@@ -27,6 +29,13 @@ export function formatBlogDisplayDate(value: string): string {
 
 export function formatAdminDateTime(value: string | Date): string {
   return dayjs(value).format('D MMM YYYY')
+}
+
+/** e.g. "2 hours ago" — for admin lists where recency matters more than the exact date. */
+export function formatRelativeTime(value: string | Date): string {
+  const parsed = dayjs(value)
+  if (!parsed.isValid()) return ''
+  return parsed.fromNow()
 }
 
 export function toDate(value: string): Date {

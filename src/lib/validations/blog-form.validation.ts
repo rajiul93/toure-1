@@ -13,6 +13,12 @@ const imageFieldSchema = z.object({
   alt_text: z.string().trim(),
 })
 
+export const blogGalleryImageSchema = z.object({
+  id: z.string().trim().min(1),
+  url: pendingImageUrlSchema,
+  alt_text: z.string().trim(),
+})
+
 const dateInputSchema = z
   .string()
   .trim()
@@ -56,6 +62,7 @@ export const blogFormSchema = z
       short_description: z.string().trim().min(10, 'Short description is required'),
       description: z.string().trim().min(1, 'Description is required'),
       featured_image: imageFieldSchema,
+      gallery: z.array(blogGalleryImageSchema).max(20, 'Maximum 20 gallery images'),
       is_featured: z.boolean(),
     }),
     faqs: z.array(blogFaqSchema),
@@ -86,36 +93,60 @@ export const blogFormSchema = z
       })
     }
 
-    const blobFields: Array<{ path: (string | number)[]; label: string; value: string }> = [
-      { path: ['basic_info', 'description'], label: 'Blog content', value: values.basic_info.description },
-      { path: ['basic_info', 'featured_image', 'url'], label: 'Featured image', value: values.basic_info.featured_image.url },
-      { path: ['meta_data', 'meta_image', 'url'], label: 'Meta image', value: values.meta_data.meta_image.url },
-      { path: ['social_meta_data', 'fb_meta_image', 'url'], label: 'Facebook image', value: values.social_meta_data.fb_meta_image.url },
-    ]
-
-    for (const field of blobFields) {
-      if (field.value.includes('blob:')) {
-        ctx.addIssue({
-          code: 'custom',
-          message: `${field.label} contains unpublished image URLs. Re-insert the images and save again.`,
-          path: field.path,
-        })
-      }
-    }
-
-    values.faqs.forEach((faq, index) => {
-      if (faq.answer.includes('blob:')) {
-        ctx.addIssue({
-          code: 'custom',
-          message: `FAQ ${index + 1} contains unpublished inline images. Re-insert the images and save again.`,
-          path: ['faqs', index, 'answer'],
-        })
-      }
-    })
   })
+
+/**
+ * Server-side schema.
+ *
+ * A freshly picked image lives in the form as a `blob:` preview until
+ * `prepareBlogFormForSubmit` uploads it — and that runs *after* validation.
+ * So the blob check must not be part of `blogFormSchema` (the client resolver),
+ * or the form can never be submitted with a new image. By the time a request
+ * reaches the API the swap has happened, so a leftover blob there means the
+ * upload silently failed and the row would store a dead URL.
+ */
+export const blogSubmissionSchema = blogFormSchema.superRefine((values, ctx) => {
+  const blobFields: Array<{ path: (string | number)[]; label: string; value: string }> = [
+    { path: ['basic_info', 'description'], label: 'Blog content', value: values.basic_info.description },
+    { path: ['basic_info', 'featured_image', 'url'], label: 'Featured image', value: values.basic_info.featured_image.url },
+    { path: ['meta_data', 'meta_image', 'url'], label: 'Meta image', value: values.meta_data.meta_image.url },
+    { path: ['social_meta_data', 'fb_meta_image', 'url'], label: 'Facebook image', value: values.social_meta_data.fb_meta_image.url },
+  ]
+
+  for (const field of blobFields) {
+    if (field.value.includes('blob:')) {
+      ctx.addIssue({
+        code: 'custom',
+        message: `${field.label} contains unpublished image URLs. Re-insert the images and save again.`,
+        path: field.path,
+      })
+    }
+  }
+
+  values.faqs.forEach((faq, index) => {
+    if (faq.answer.includes('blob:')) {
+      ctx.addIssue({
+        code: 'custom',
+        message: `FAQ ${index + 1} contains unpublished inline images. Re-insert the images and save again.`,
+        path: ['faqs', index, 'answer'],
+      })
+    }
+  })
+
+  values.basic_info.gallery.forEach((item, index) => {
+    if (item.url.includes('blob:')) {
+      ctx.addIssue({
+        code: 'custom',
+        message: `Gallery image ${index + 1} has not been uploaded yet. Save again or re-add the image.`,
+        path: ['basic_info', 'gallery', index, 'url'],
+      })
+    }
+  })
+})
 
 export type BlogFormValues = z.infer<typeof blogFormSchema>
 export type BlogFaqValues = z.infer<typeof blogFaqSchema>
+export type BlogGalleryImageValues = z.infer<typeof blogGalleryImageSchema>
 
 export const blogFormTabs = [
   'basic_info',
@@ -155,6 +186,7 @@ export function createEmptyBlogFormValues(): BlogFormValues {
         url: '',
         alt_text: '',
       },
+      gallery: [],
       is_featured: false,
     },
     faqs: [],

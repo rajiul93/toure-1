@@ -1,8 +1,11 @@
 import BookNowLink from '@/components/book-now-link'
 import BlogArticleStructuredData from '@/components/blog/blog-article-structured-data'
+import BlogGallerySwiper from '@/components/blog/blog-gallery-swiper'
+import RelatedBlogsRail from '@/components/blog/related-blogs-rail'
 import { formatBlogDisplayDate } from '@/lib/dayjs'
 import { prepareBlogArticleHtml } from '@/lib/blog-article-html'
-import type { PublicBlogDetail } from '@/lib/blog-detail'
+import { buildPublicBlogGalleryImages } from '@/lib/blog-gallery'
+import type { PublicBlogDetail, PublicRelatedBlogPost } from '@/lib/blog-detail'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -34,7 +37,38 @@ function BlogFaqSection({ faqs }: { faqs: PublicBlogDetail['faqs'] }) {
   )
 }
 
-export default function BlogArticleView({ blog }: { blog: PublicBlogDetail }) {
+export default function BlogArticleView({
+  blog,
+  relatedPosts,
+}: {
+  blog: PublicBlogDetail
+  relatedPosts: PublicRelatedBlogPost[]
+}) {
+  const galleryImages = buildPublicBlogGalleryImages(
+    { url: blog.featuredImageUrl, alt_text: blog.featuredImageAlt },
+    blog.gallery,
+  )
+  const showGallerySwiper = blog.gallery.length > 0 && galleryImages.length > 0
+
+  const categoryOverlay = (
+    <>
+      <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-heading/60 to-transparent" />
+      <div className="absolute bottom-0 flex flex-wrap gap-2 p-4 sm:p-8">
+        <span className="rounded-full bg-white/90 px-2.5 py-0.5 text-xs font-semibold text-heading">
+          {blog.categoryLabel}
+        </span>
+        {blog.tags.map((tag) => (
+          <span
+            key={tag}
+            className="rounded-full bg-white/80 px-2.5 py-0.5 text-xs font-medium text-zinc-700"
+          >
+            {tag}
+          </span>
+        ))}
+      </div>
+    </>
+  )
+
   return (
     <>
       <BlogArticleStructuredData blog={blog} />
@@ -48,31 +82,24 @@ export default function BlogArticleView({ blog }: { blog: PublicBlogDetail }) {
         </Link>
 
         {/* Desktop: card. Mobile: flat article — hero full-bleed, no border/shadow inset. */}
-        <div className="mt-4 sm:mt-6 sm:overflow-hidden sm:rounded-2xl sm:border sm:border-zinc-200 sm:bg-white sm:shadow-sm">
-          <div className="relative aspect-[16/10] max-h-64 w-[calc(100%+2rem)] -mx-4 overflow-hidden sm:mx-0 sm:aspect-[21/9] sm:max-h-80 sm:w-full">
-            <Image
-              src={blog.featuredImageUrl}
-              alt={blog.featuredImageAlt}
-              fill
-              className="object-cover"
-              priority
-              sizes="(max-width: 640px) 100vw, 896px"
-            />
-            <div className="absolute inset-0 bg-linear-to-t from-heading/60 to-transparent" />
-            <div className="absolute bottom-0 flex flex-wrap gap-2 p-4 sm:p-8">
-              <span className="rounded-full bg-white/90 px-2.5 py-0.5 text-xs font-semibold text-heading">
-                {blog.categoryLabel}
-              </span>
-              {blog.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-full bg-white/80 px-2.5 py-0.5 text-xs font-medium text-zinc-700"
-                >
-                  {tag}
-                </span>
-              ))}
+        <div className="mt-4 overflow-visible sm:mt-6 sm:rounded-2xl sm:border sm:border-zinc-200 sm:bg-white sm:shadow-sm">
+          {showGallerySwiper ? (
+            <BlogGallerySwiper images={galleryImages} variant="hero">
+              {categoryOverlay}
+            </BlogGallerySwiper>
+          ) : (
+            <div className="relative aspect-[16/10] max-h-64 w-[calc(100%+2rem)] -mx-4 overflow-hidden sm:mx-0 sm:aspect-[21/9] sm:max-h-80 sm:w-full">
+              <Image
+                src={blog.featuredImageUrl}
+                alt={blog.featuredImageAlt}
+                fill
+                className="object-cover"
+                priority
+                sizes="(max-width: 640px) 100vw, 896px"
+              />
+              {categoryOverlay}
             </div>
-          </div>
+          )}
 
           <div className="py-6 sm:px-10 sm:py-10">
             <header>
@@ -109,6 +136,8 @@ export default function BlogArticleView({ blog }: { blog: PublicBlogDetail }) {
           </div>
         </div>
       </article>
+
+      <RelatedBlogsRail posts={relatedPosts} />
     </>
   )
 }

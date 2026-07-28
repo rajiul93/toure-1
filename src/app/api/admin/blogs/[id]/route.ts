@@ -1,7 +1,7 @@
 import { jsonError, requireTeamRoleApi } from '@/lib/auth/require-role-api'
 import { revalidateBlogPaths } from '@/lib/blog-revalidation'
 import { getBlogFromDB, softDeleteBlogInDB, updateBlogInDB } from '@/lib/services/blog.service'
-import { blogFormSchema } from '@/lib/validations/blog-form.validation'
+import { blogSubmissionSchema } from '@/lib/validations/blog-form.validation'
 import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
@@ -46,7 +46,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     const previousSlug = existing.form.basic_info.slug
     const body = await request.json()
-    const parsed = blogFormSchema.safeParse(body)
+    const parsed = blogSubmissionSchema.safeParse(body)
 
     if (!parsed.success) {
       return jsonError(parsed.error.issues[0]?.message ?? 'Invalid blog data')

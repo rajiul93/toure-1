@@ -2,7 +2,7 @@ import { jsonError, requireTeamRoleApi } from '@/lib/auth/require-role-api'
 import { revalidateBlogPaths } from '@/lib/blog-revalidation'
 import { createBlogInDB, listAdminBlogsFromDB } from '@/lib/services/blog.service'
 import { adminBlogListQuerySchema } from '@/lib/validations/admin-blog.validation'
-import { blogFormSchema } from '@/lib/validations/blog-form.validation'
+import { blogSubmissionSchema } from '@/lib/validations/blog-form.validation'
 import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const parsed = blogFormSchema.safeParse(body)
+    const parsed = blogSubmissionSchema.safeParse(body)
 
     if (!parsed.success) {
       return jsonError(parsed.error.issues[0]?.message ?? 'Invalid blog data')

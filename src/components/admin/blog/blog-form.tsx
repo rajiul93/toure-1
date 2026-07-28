@@ -10,11 +10,14 @@ import {
   slugifyTitle,
   type BlogFormTab,
   type BlogFormValues,
+  type BlogGalleryImageValues,
 } from '@/lib/validations/blog-form.validation'
 import { saveAdminBlog } from '@/lib/admin-blog-api'
 import { BLOG_FORM_OPTIONS } from '@/lib/blog-form-options'
 import DeferredImagePicker from '@/components/admin/blog/deferred-image-picker'
+import BlogGalleryField from '@/components/admin/blog/blog-gallery-field'
 import { prepareBlogFormForSubmit } from '@/lib/quill/resolve-pending-images'
+import { galleryFieldKey } from '@/lib/blog-gallery'
 import { defaultAltFromFileName } from '@/lib/image-alt'
 import { usePendingImageStore } from '@/store/pending-image-store'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -142,12 +145,22 @@ export default function BlogForm({ mode, blogId, initialValues }: BlogFormProps)
     getValues,
     setValue,
     reset,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = form
 
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'faqs',
+  })
+
+  const {
+    append: appendGallery,
+    remove: removeGallery,
+    update: updateGallery,
+    move: moveGallery,
+  } = useFieldArray({
+    control,
+    name: 'basic_info.gallery',
   })
 
   const selectedTags = watch('basic_info.tags')
@@ -156,6 +169,7 @@ export default function BlogForm({ mode, blogId, initialValues }: BlogFormProps)
   const blogSlug = watch('basic_info.slug')
   const featuredImageUrl = watch('basic_info.featured_image.url')
   const featuredImageAlt = watch('basic_info.featured_image.alt_text')
+  const galleryItems = watch('basic_info.gallery')
   const metaImageUrl = watch('meta_data.meta_image.url')
   const metaImageAlt = watch('meta_data.meta_image.alt_text')
   const fbMetaImageUrl = watch('social_meta_data.fb_meta_image.url')
@@ -205,6 +219,40 @@ export default function BlogForm({ mode, blogId, initialValues }: BlogFormProps)
       (selectedKeywords ?? []).filter((item) => item !== keyword),
       { shouldDirty: true, shouldValidate: true },
     )
+  }
+
+  function addGalleryFiles(files: File[]) {
+    const currentCount = getValues('basic_info.gallery').length
+    const remaining = 20 - currentCount
+    if (remaining <= 0) return
+
+    files.slice(0, remaining).forEach((file) => {
+      const id = crypto.randomUUID()
+      const defaultAlt = defaultAltFromFileName(file.name)
+      const previewUrl = addPendingFile(file, galleryFieldKey(id))
+      appendGallery({ id, url: previewUrl, alt_text: defaultAlt })
+      setPendingAltText(previewUrl, defaultAlt)
+    })
+  }
+
+  function removeGalleryItem(index: number) {
+    const item = getValues(`basic_info.gallery.${index}`)
+    if (item) {
+      removePendingField(galleryFieldKey(item.id))
+    }
+    removeGallery(index)
+  }
+
+  function updateGalleryItem(index: number, nextItem: BlogGalleryImageValues) {
+    updateGallery(index, nextItem)
+    const url = nextItem.url
+    if (url.startsWith('blob:')) {
+      setPendingAltText(url, nextItem.alt_text)
+    }
+  }
+
+  function reorderGalleryItem(fromIndex: number, toIndex: number) {
+    moveGallery(fromIndex, toIndex)
   }
 
   async function onSubmit(values: BlogFormValues) {
@@ -293,7 +341,14 @@ export default function BlogForm({ mode, blogId, initialValues }: BlogFormProps)
 
           <button
             type="submit"
-            disabled={isSubmitting || isSaving}
+            // On an existing post there is nothing to send until something
+            // changes; `reset(blog.form)` after a save clears this again.
+            disabled={isSubmitting || isSaving || (mode === 'update' && !isDirty)}
+            title={
+              mode === 'update' && !isDirty && !isSaving
+                ? 'No changes to save'
+                : undefined
+            }
             className="inline-flex items-center justify-center rounded-xl bg-heading px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-heading/90 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSaving ? 'Saving...' : mode === 'create' ? 'Create blog' : 'Update blog'}
@@ -630,6 +685,23 @@ export default function BlogForm({ mode, blogId, initialValues }: BlogFormProps)
                 <span className="text-sm font-medium text-heading">Mark as featured blog</span>
               </label>
             </div>
+          </SectionCard>
+
+          <SectionCard
+            title="Photo gallery"
+            description="Drag to reorder. Gallery order is used on the blog detail page."
+          >
+            <BlogGalleryField
+              items={galleryItems}
+              onAddFiles={addGalleryFiles}
+              onUpdate={updateGalleryItem}
+              onRemove={removeGalleryItem}
+              onReorder={reorderGalleryItem}
+              errors={Array.isArray(errors.basic_info?.gallery) ? errors.basic_info.gallery : undefined}
+            />
+            {typeof errors.basic_info?.gallery?.message === 'string' ? (
+              <p className="mt-2 text-xs text-red-600">{errors.basic_info.gallery.message}</p>
+            ) : null}
           </SectionCard>
         </div>
       ) : null}

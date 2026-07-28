@@ -68,6 +68,17 @@ body {
   overflow-x: hidden;
 }
 
+/* nextjs-toploader — #nprogress needs its own stacking context (see github.com/TheSGJ/nextjs-toploader/issues/131) */
+#nprogress {
+  position: fixed;
+  z-index: 99999;
+  pointer-events: none;
+}
+
+#nprogress .bar {
+  z-index: 99999;
+}
+
 body::before {
   content: "";
   position: fixed;
@@ -603,4 +614,282 @@ body::after {
   background: rgb(250 250 250);
   color: var(--heading);
   font-weight: 600;
+}
+
+/* Blog detail — gallery (main fade + custom thumbs) */
+.blog-gallery-swiper {
+  width: 100%;
+}
+
+.blog-gallery-swiper--hero .blog-gallery-hero-frame,
+.blog-gallery-swiper .blog-gallery-frame {
+  position: relative;
+  overflow: hidden;
+  background: rgb(24 24 27);
+}
+
+.blog-gallery-swiper--hero .blog-gallery-hero-frame {
+  aspect-ratio: 16 / 10;
+  max-height: 20rem;
+}
+
+@media (max-width: 639px) {
+  .blog-gallery-swiper--hero .blog-gallery-hero-frame {
+    width: calc(100% + 2rem);
+    margin-inline: -1rem;
+  }
+}
+
+@media (min-width: 640px) {
+  .blog-gallery-swiper--hero .blog-gallery-hero-frame {
+    aspect-ratio: 21 / 9;
+    max-height: 28rem;
+    border-radius: 1rem 1rem 0 0;
+  }
+}
+
+.blog-gallery-swiper--hero .blog-gallery-main,
+.blog-gallery-swiper .blog-gallery-frame .blog-gallery-main {
+  height: 100%;
+}
+
+.blog-gallery-main .blog-gallery-slide,
+.blog-gallery-swiper--hero .blog-gallery-main .swiper-wrapper,
+.blog-gallery-swiper--hero .blog-gallery-main .swiper-slide,
+.blog-gallery-swiper .blog-gallery-frame .blog-gallery-main .swiper-wrapper,
+.blog-gallery-swiper .blog-gallery-frame .blog-gallery-main .swiper-slide {
+  height: 100%;
+}
+
+.blog-gallery-main .blog-gallery-slide,
+.blog-gallery-swiper--hero .blog-gallery-main .swiper-slide,
+.blog-gallery-swiper .blog-gallery-frame .blog-gallery-main .swiper-slide {
+  position: relative;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+.blog-gallery-swiper--hero.blog-gallery-swiper--single .blog-gallery-hero-frame,
+.blog-gallery-swiper--hero .blog-gallery-main .swiper-slide,
+.blog-gallery-swiper .blog-gallery-frame .blog-gallery-main .swiper-slide {
+  position: relative;
+}
+
+.blog-gallery-swiper--hero.blog-gallery-swiper--single .blog-gallery-hero-frame > span,
+.blog-gallery-swiper--hero .blog-gallery-main .swiper-slide img,
+.blog-gallery-swiper .blog-gallery-frame .blog-gallery-main .swiper-slide img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.blog-gallery-swiper--hero .blog-gallery-hero-frame > .blog-gallery-main {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  border-radius: 0;
+}
+
+.blog-gallery-swiper .blog-gallery-main {
+  width: 100%;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background: rgb(24 24 27);
+}
+
+.blog-gallery-swiper--hero .blog-gallery-main {
+  border-radius: 0;
+}
+
+@media (min-width: 640px) {
+  .blog-gallery-swiper:not(.blog-gallery-swiper--hero) .blog-gallery-main {
+    border-radius: 1rem;
+  }
+
+  .blog-gallery-swiper:not(.blog-gallery-swiper--hero) .blog-gallery-main .swiper-slide img {
+    aspect-ratio: 21 / 9;
+    max-height: 20rem;
+  }
+}
+
+.blog-gallery-swiper:not(.blog-gallery-swiper--hero) .blog-gallery-main .swiper-slide img {
+  aspect-ratio: 16 / 10;
+}
+
+/* Counter badge */
+.blog-gallery-counter {
+  position: absolute;
+  top: 0.875rem;
+  right: 0.875rem;
+  z-index: 6;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #fff;
+  background: rgb(0 0 0 / 42%);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgb(255 255 255 / 18%);
+  border-radius: 9999px;
+  pointer-events: none;
+}
+
+.blog-gallery-counter-sep {
+  opacity: 0.55;
+  font-weight: 500;
+}
+
+/* Custom nav arrows */
+.blog-gallery-nav {
+  position: absolute;
+  top: 50%;
+  z-index: 6;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin-top: -1.125rem;
+  border-radius: 9999px;
+  color: #fff;
+  background: rgb(0 0 0 / 38%);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgb(255 255 255 / 20%);
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.blog-gallery-nav:hover {
+  background: rgb(0 0 0 / 55%);
+  transform: scale(1.05);
+}
+
+.blog-gallery-nav:active {
+  transform: scale(0.97);
+}
+
+.blog-gallery-nav--prev {
+  left: 0.75rem;
+}
+
+.blog-gallery-nav--next {
+  right: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .blog-gallery-nav {
+    width: 2.5rem;
+    height: 2.5rem;
+    margin-top: -1.25rem;
+  }
+
+  .blog-gallery-nav--prev {
+    left: 1rem;
+  }
+
+  .blog-gallery-nav--next {
+    right: 1rem;
+  }
+}
+
+.blog-gallery-nav:disabled {
+  opacity: 0.35;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Thumbnail strip */
+.blog-gallery-thumbs {
+  display: flex;
+  gap: 0.625rem;
+  margin-top: 0.75rem;
+  padding: 0.125rem 0.125rem 0.25rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.blog-gallery-thumbs::-webkit-scrollbar {
+  display: none;
+}
+
+.blog-gallery-swiper--hero .blog-gallery-thumbs {
+  padding: 0.875rem 1rem 1rem;
+  background: #fff;
+  border-bottom: 1px solid rgb(228 228 231);
+}
+
+@media (min-width: 640px) {
+  .blog-gallery-swiper--hero .blog-gallery-thumbs {
+    padding: 1rem 2.5rem 1.125rem;
+    gap: 0.75rem;
+  }
+}
+
+.blog-gallery-thumb {
+  flex: 0 0 auto;
+  width: 4.5rem;
+  height: 3.25rem;
+  padding: 0;
+  border: none;
+  border-radius: 0.625rem;
+  overflow: hidden;
+  cursor: pointer;
+  scroll-snap-align: start;
+  background: rgb(244 244 245);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 6%);
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  opacity: 0.72;
+  transform: scale(0.96);
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease,
+    outline-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+@media (min-width: 640px) {
+  .blog-gallery-thumb {
+    width: 5.5rem;
+    height: 3.75rem;
+    border-radius: 0.75rem;
+  }
+}
+
+.blog-gallery-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  user-select: none;
+}
+
+.blog-gallery-thumb:hover {
+  opacity: 0.92;
+  transform: scale(0.98);
+}
+
+.blog-gallery-thumb.is-active {
+  opacity: 1;
+  transform: scale(1);
+  outline-color: var(--primary);
+  box-shadow:
+    0 4px 14px rgb(255 55 55 / 22%),
+    0 0 0 1px rgb(255 55 55 / 15%);
+}
+
+.blog-gallery-thumb:focus-visible {
+  outline-color: var(--primary);
+  outline-offset: 2px;
 }

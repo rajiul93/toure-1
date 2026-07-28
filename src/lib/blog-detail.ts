@@ -1,17 +1,28 @@
 import { BLOG_FORM_OPTIONS } from '@/lib/blog-form-options'
-import { BLOG_POST_BODY, getBlogPost } from '@/lib/blog-posts'
+import { parseBlogGalleryImages, type BlogGalleryImage } from '@/lib/blog-gallery'
+import { BLOG_POST_BODY, getBlogPost, BLOG_POSTS } from '@/lib/blog-posts'
 import {
   repairBlogRecordInDBIfNeeded,
 } from '@/lib/blog-html-repair'
 import { dayjs } from '@/lib/dayjs'
 import { prisma } from '@/lib/db'
-import { countPublishedBlogsInDB } from '@/lib/services/blog.service'
+import { countPublishedBlogsInDB, getRelatedBlogPostsFromDB } from '@/lib/services/blog.service'
 
 const DEFAULT_BLOG_IMAGE = '/images/banner/0.webp'
 
 export type PublicBlogFaq = {
   question: string
   answer: string
+}
+
+export type PublicBlogGalleryImage = BlogGalleryImage
+
+export type PublicRelatedBlogPost = {
+  slug: string
+  title: string
+  date: string
+  image: string
+  categoryLabel: string
 }
 
 export type PublicBlogDetail = {
@@ -23,6 +34,7 @@ export type PublicBlogDetail = {
   blogDate: string
   featuredImageUrl: string
   featuredImageAlt: string
+  gallery: PublicBlogGalleryImage[]
   categoryLabel: string
   tags: string[]
   keywords: string[]
@@ -75,6 +87,7 @@ export function getMockBlogDetail(slug: string): PublicBlogDetail | null {
     blogDate: post.date,
     featuredImageUrl: withDefaultImage(post.image),
     featuredImageAlt: post.title,
+    gallery: [],
     categoryLabel: post.category,
     tags: [post.category],
     keywords: [],
@@ -121,6 +134,27 @@ export async function resolveBlogPostBySlug(slug: string): Promise<PublicBlogDet
   return getMockBlogDetail(slug)
 }
 
+export async function resolveRelatedBlogPosts(
+  excludeSlug: string,
+  limit = 12,
+): Promise<PublicRelatedBlogPost[]> {
+  const publishedCount = await countPublishedBlogsInDB()
+
+  if (publishedCount > 0) {
+    return getRelatedBlogPostsFromDB(excludeSlug, limit)
+  }
+
+  return BLOG_POSTS.filter((post) => post.slug !== excludeSlug)
+    .slice(0, limit)
+    .map((post) => ({
+      slug: post.slug,
+      title: post.title,
+      date: post.date,
+      image: post.image,
+      categoryLabel: post.category,
+    }))
+}
+
 export function mapBlogRecordToPublicDetail(blog: {
   slug: string
   title: string
@@ -130,6 +164,7 @@ export function mapBlogRecordToPublicDetail(blog: {
   blogDate: Date
   featuredImageUrl: string
   featuredImageAlt: string
+  galleryImages: unknown
   categoryId: string
   tags: string[]
   keywords: string[]
@@ -159,6 +194,7 @@ export function mapBlogRecordToPublicDetail(blog: {
     blogDate: dayjs(blog.blogDate).format('YYYY-MM-DD'),
     featuredImageUrl,
     featuredImageAlt: blog.featuredImageAlt.trim() || blog.title,
+    gallery: parseBlogGalleryImages(blog.galleryImages).filter((item) => item.url.trim()),
     categoryLabel: resolveCategoryLabel(blog.categoryId),
     tags: resolveTagLabels(blog.tags),
     keywords: blog.keywords,

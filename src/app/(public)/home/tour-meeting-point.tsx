@@ -154,7 +154,7 @@ export default function TourMeetingPoint() {
       </h2>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-2 lg:items-stretch">
-        <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-2xl border border-zinc-200 ">
           <ul className="p-4 sm:p-5">
             {ITINERARY_STOPS.map((stop, index) => (
               <ItineraryAccordionItem

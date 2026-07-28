@@ -42,6 +42,7 @@ export const MOCK_BLOG_FOR_UPDATE = {
       url: 'https://images.example.com/louvre-guide.jpg',
       alt_text: 'Visitors walking toward the Louvre pyramid',
     },
+    gallery: [],
     is_featured: true,
     publish_status: 'publish' as const,
     is_delete: false,

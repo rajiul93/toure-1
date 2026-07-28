@@ -1,4 +1,5 @@
 import { defaultAltFromFileName } from '@/lib/image-alt'
+import { galleryFieldKey } from '@/lib/blog-gallery'
 import { uploadEditorImage } from '@/lib/quill/upload-editor-image'
 import type { BlogFormValues } from '@/lib/validations/blog-form.validation'
 import { usePendingImageStore } from '@/store/pending-image-store'
@@ -64,10 +65,15 @@ export async function uploadPendingImages(
 }
 
 export async function prepareBlogFormForSubmit(values: BlogFormValues): Promise<BlogFormValues> {
+  const galleryAltByFieldKey = Object.fromEntries(
+    values.basic_info.gallery.map((item) => [galleryFieldKey(item.id), item.alt_text]),
+  )
+
   const urlMap = await uploadPendingImages({
     featured_image: values.basic_info.featured_image.alt_text,
     meta_image: values.meta_data.meta_image.alt_text,
     fb_meta_image: values.social_meta_data.fb_meta_image.alt_text,
+    ...galleryAltByFieldKey,
   })
 
   const prepared: BlogFormValues = {
@@ -79,6 +85,10 @@ export async function prepareBlogFormForSubmit(values: BlogFormValues): Promise<
         ...values.basic_info.featured_image,
         url: replaceFieldUrl(values.basic_info.featured_image.url, urlMap),
       },
+      gallery: values.basic_info.gallery.map((item) => ({
+        ...item,
+        url: replaceFieldUrl(item.url, urlMap),
+      })),
     },
     faqs: values.faqs.map((faq) => ({
       ...faq,
@@ -105,6 +115,9 @@ export async function prepareBlogFormForSubmit(values: BlogFormValues): Promise<
     assertNoBlobUrls(`FAQ ${index + 1}`, faq.answer)
   })
   assertNoBlobUrls('Featured image', prepared.basic_info.featured_image.url)
+  prepared.basic_info.gallery.forEach((item, index) => {
+    assertNoBlobUrls(`Gallery image ${index + 1}`, item.url)
+  })
   assertNoBlobUrls('Meta image', prepared.meta_data.meta_image.url)
   if (prepared.social_meta_data.fb_meta_image.url) {
     assertNoBlobUrls('Facebook image', prepared.social_meta_data.fb_meta_image.url)

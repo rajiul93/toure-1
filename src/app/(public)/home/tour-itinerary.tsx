@@ -9,7 +9,7 @@ interface TimelineProps {
 function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
     <div
-      className={`rounded-2xl bg-white p-6 text-sm leading-7 text-zinc-600 shadow-lg shadow-black/5 sm:p-8 ${className}`}
+      className={`rounded-2xl    text-sm leading-7 text-zinc-600     ${className}`}
     >
       {children}
     </div>

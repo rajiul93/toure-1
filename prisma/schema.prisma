@@ -62,6 +62,7 @@ model Blog {
   description       String    @db.Text
   featuredImageUrl  String    @default("")
   featuredImageAlt  String    @default("")
+  galleryImages     Json      @default("[]")
   isFeatured        Boolean   @default(false)
   metaTitle         String
   metaDescription   String

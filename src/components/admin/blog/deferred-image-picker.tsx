@@ -84,6 +84,10 @@ export default function DeferredImagePicker({
         </div>
       )}
 
+      {/* Rendered next to the image, not after the alt-text input, so an image
+          error is never mistaken for an alt-text error. */}
+      {error ? <p className="mt-2 text-xs text-red-600">{error}</p> : null}
+
       {previewUrl && onAltTextChange ? (
         <div className="mt-4">
           <label htmlFor={altInputId} className="mb-1.5 block text-sm font-medium text-heading">
@@ -100,8 +104,6 @@ export default function DeferredImagePicker({
           {altError ? <p className="mt-1 text-xs text-red-600">{altError}</p> : null}
         </div>
       ) : null}
-
-      {error ? <p className="mt-2 text-xs text-red-600">{error}</p> : null}
     </div>
   )
 }

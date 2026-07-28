@@ -1,5 +1,5 @@
 import BlogArticleView from '@/components/blog/blog-article-view'
-import { resolveBlogPostBySlug } from '@/lib/blog-detail'
+import { resolveBlogPostBySlug, resolveRelatedBlogPosts } from '@/lib/blog-detail'
 import { createBlogPostMetadata, createNotFoundBlogMetadata } from '@/lib/metadata'
 import {
   countPublishedBlogsInDB,
@@ -31,11 +31,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function BlogPostPage({ params }: Props) {
   await connection()
   const { slug } = await params
-  const post = await resolveBlogPostBySlug(slug)
+  const [post, relatedPosts] = await Promise.all([
+    resolveBlogPostBySlug(slug),
+    resolveRelatedBlogPosts(slug),
+  ])
 
   if (!post) notFound()
 
-  return <BlogArticleView blog={post} />
+  return <BlogArticleView blog={post} relatedPosts={relatedPosts} />
 }
 
 export async function generateStaticParams() {

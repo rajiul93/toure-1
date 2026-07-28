@@ -2,7 +2,7 @@ import { PrismaClient } from '../../generated/prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 
 /** Bump when Prisma schema changes so dev HMR picks up a fresh client. */
-const PRISMA_CLIENT_VERSION = 'seo-settings-v1'
+const PRISMA_CLIENT_VERSION = 'blog-gallery-v1'
 
 type PrismaGlobal = {
   prisma?: PrismaClient

@@ -1,4 +1,6 @@
+import { BLOG_FORM_OPTIONS } from '@/lib/blog-form-options'
 import { dayjs, parseInputDate } from '@/lib/dayjs'
+import { parseBlogGalleryImages, serializeBlogGalleryImages, galleryFieldKey } from '@/lib/blog-gallery'
 import { sanitizeBlogHtmlForSave } from '@/lib/blog-sanitize.server'
 import { repairBlogRecordInDBIfNeeded } from '@/lib/blog-html-repair'
 import { prisma } from '@/lib/db'
@@ -7,6 +9,21 @@ import type { BlogFormValues, BlogPublishStatus } from '@/lib/validations/blog-f
 import type { Blog, BlogFaq, Prisma, PublishStatus } from '../../../generated/prisma/client'
 
 const BLOG_ENTITY_TYPE = 'blog'
+
+export type PublicRelatedBlogPost = {
+  slug: string
+  title: string
+  date: string
+  image: string
+  categoryLabel: string
+}
+
+function resolveCategoryLabel(categoryId: string): string {
+  return (
+    BLOG_FORM_OPTIONS.categories.find((category) => category.id === categoryId)?.name ??
+    categoryId
+  )
+}
 
 type BlogWithFaqs = Blog & { faqs: BlogFaq[] }
 
@@ -38,6 +55,9 @@ async function mapFormToBlogFields(
     description,
     featuredImageUrl: values.basic_info.featured_image.url,
     featuredImageAlt: values.basic_info.featured_image.alt_text,
+    galleryImages: serializeBlogGalleryImages(
+      values.basic_info.gallery,
+    ) as Prisma.InputJsonValue,
     isFeatured: values.basic_info.is_featured,
     metaTitle: values.meta_data.meta_title,
     metaDescription: values.meta_data.meta_description,
@@ -80,6 +100,7 @@ export function blogToFormValues(blog: BlogWithFaqs): BlogFormValues {
         url: blog.featuredImageUrl,
         alt_text: blog.featuredImageAlt,
       },
+      gallery: parseBlogGalleryImages(blog.galleryImages),
       is_featured: blog.isFeatured,
     },
     faqs: blog.faqs
@@ -124,6 +145,10 @@ async function syncBlogImageUsages(blogId: string, values: BlogFormValues) {
     { url: values.basic_info.featured_image.url, field: 'featured_image' },
     { url: values.meta_data.meta_image.url, field: 'meta_image' },
     { url: values.social_meta_data.fb_meta_image.url, field: 'fb_meta_image' },
+    ...values.basic_info.gallery.map((item) => ({
+      url: item.url,
+      field: galleryFieldKey(item.id),
+    })),
   ] as const
 
   for (const item of imageFields) {
@@ -211,6 +236,60 @@ export async function listAdminBlogsFromDB(params: {
   }
 }
 
+export type AdminBlogOverviewItem = {
+  id: string
+  title: string
+  publishStatus: BlogPublishStatus
+  updatedAt: string
+}
+
+export type AdminBlogOverview = {
+  published: number
+  draft: number
+  deleted: number
+  recent: AdminBlogOverviewItem[]
+}
+
+/**
+ * Counts and latest edits for the admin home page.
+ *
+ * `groupBy` gets both live counts in one round trip instead of a query per
+ * status; all three columns are indexed (`publishStatus`, `isDeleted`).
+ */
+export async function getAdminBlogOverviewFromDB(
+  recentLimit = 5,
+): Promise<AdminBlogOverview> {
+  const [grouped, deleted, recent] = await Promise.all([
+    prisma.blog.groupBy({
+      by: ['publishStatus'],
+      where: { isDeleted: false },
+      _count: { _all: true },
+    }),
+    prisma.blog.count({ where: { isDeleted: true } }),
+    prisma.blog.findMany({
+      where: { isDeleted: false },
+      orderBy: { updatedAt: 'desc' },
+      take: recentLimit,
+      select: { id: true, title: true, publishStatus: true, updatedAt: true },
+    }),
+  ])
+
+  const countFor = (status: PublishStatus) =>
+    grouped.find((row) => row.publishStatus === status)?._count._all ?? 0
+
+  return {
+    published: countFor('PUBLISH'),
+    draft: countFor('DRAFT'),
+    deleted,
+    recent: recent.map((item) => ({
+      id: item.id,
+      title: item.title,
+      publishStatus: fromDbPublishStatus(item.publishStatus),
+      updatedAt: item.updatedAt.toISOString(),
+    })),
+  }
+}
+
 export async function getPublishedBlogSlugsFromDB(): Promise<string[]> {
   const blogs = await prisma.blog.findMany({
     where: {
@@ -289,6 +368,56 @@ export async function listPublicBlogPostsFromDB(params: {
     total,
     totalPages,
   }
+}
+
+export async function getRelatedBlogPostsFromDB(
+  excludeSlug: string,
+  limit = 12,
+): Promise<PublicRelatedBlogPost[]> {
+  const current = await prisma.blog.findFirst({
+    where: {
+      slug: excludeSlug,
+      isDeleted: false,
+      publishStatus: 'PUBLISH',
+    },
+    select: { categoryId: true },
+  })
+
+  const items = await prisma.blog.findMany({
+    where: {
+      isDeleted: false,
+      publishStatus: 'PUBLISH',
+      slug: { not: excludeSlug },
+    },
+    orderBy: [{ publishDate: 'desc' }, { createdAt: 'desc' }],
+    take: Math.max(limit * 3, limit),
+    select: {
+      slug: true,
+      title: true,
+      publishDate: true,
+      featuredImageUrl: true,
+      categoryId: true,
+    },
+  })
+
+  const categoryId = current?.categoryId
+  const sorted = [...items].sort((a, b) => {
+    if (categoryId) {
+      const aMatch = a.categoryId === categoryId ? 1 : 0
+      const bMatch = b.categoryId === categoryId ? 1 : 0
+      if (aMatch !== bMatch) return bMatch - aMatch
+    }
+
+    return b.publishDate.getTime() - a.publishDate.getTime()
+  })
+
+  return sorted.slice(0, limit).map((item) => ({
+    slug: item.slug,
+    title: item.title,
+    date: dayjs(item.publishDate).format('YYYY-MM-DD'),
+    image: item.featuredImageUrl.trim() || '/images/banner/0.webp',
+    categoryLabel: resolveCategoryLabel(item.categoryId),
+  }))
 }
 
 export async function listBlogsFromDB(
