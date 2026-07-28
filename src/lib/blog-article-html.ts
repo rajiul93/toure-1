@@ -86,23 +86,46 @@ function registerHooks() {
  * lowest `marketer` role) and rendered with `dangerouslySetInnerHTML` on public
  * pages, so this is the boundary that prevents stored XSS.
  */
+/**
+ * Save-time boundary: security only.
+ *
+ * It must never rewrite the author's formatting. An empty `<p><br></p>` is how
+ * Quill represents a blank line the author deliberately typed, so stripping it
+ * here silently destroyed content on every save. Spacing is a presentation
+ * concern and is handled at render instead.
+ */
 export function sanitizeBlogHtml(html: string): string {
   if (!html) return ''
   registerHooks()
-  return DOMPurify.sanitize(html, SANITIZE_CONFIG)
+  return stripQuillEditorArtifacts(DOMPurify.sanitize(html, SANITIZE_CONFIG))
 }
 
-function cleanQuillHtml(html: string): string {
+/** Editor-internal markup, not authored content — safe to drop on save. */
+function stripQuillEditorArtifacts(html: string): string {
   return html
     .replace(/<span class="ql-ui"[^>]*><\/span>/gi, '')
     .replace(/\scontenteditable="false"/gi, '')
+}
+
+const EMPTY_BLOCK = /<(p|h[1-6])>(?:\s|<br\s*\/?>)*<\/\1>/gi
+
+/**
+ * Render-only tidy-up. Quill tends to leave several empty blocks stacked around
+ * embeds, which show up as a huge gap. Collapse a run of them to a single blank
+ * line — one intentional blank line always survives.
+ */
+function capConsecutiveEmptyBlocks(html: string): string {
+  return html.replace(
+    new RegExp(`(?:${EMPTY_BLOCK.source}\\s*){2,}`, 'gi'),
+    '<p><br></p>',
+  )
 }
 
 export function prepareBlogArticleHtml(html: string): string {
   if (!html) return html
 
   // Sanitize first; everything added below is our own trusted markup.
-  let output = cleanQuillHtml(sanitizeBlogHtml(html))
+  let output = capConsecutiveEmptyBlocks(sanitizeBlogHtml(html))
 
   if (output.includes('<table')) {
     const placeholders: string[] = []

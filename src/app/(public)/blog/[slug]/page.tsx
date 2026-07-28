@@ -8,8 +8,12 @@ import {
 import { BLOG_POSTS } from '@/lib/blog-posts'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { connection } from 'next/server'
 
 type Props = { params: Promise<{ slug: string }> }
+
+/** CMS edits must show immediately — do not serve stale SSG HTML after admin save. */
+export const dynamic = 'force-dynamic'
 
 export const dynamicParams = true
 
@@ -25,6 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function BlogPostPage({ params }: Props) {
+  await connection()
   const { slug } = await params
   const post = await resolveBlogPostBySlug(slug)
 

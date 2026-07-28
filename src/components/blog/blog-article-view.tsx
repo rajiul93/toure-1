@@ -24,7 +24,7 @@ function BlogFaqSection({ faqs }: { faqs: PublicBlogDetail['faqs'] }) {
               {faq.question}
             </summary>
             <div
-              className="blog-article-content mt-3 text-sm leading-relaxed text-zinc-700"
+              className="blog-article-content mt-3 text-sm text-zinc-700"
               dangerouslySetInnerHTML={{ __html: prepareBlogArticleHtml(faq.answer) }}
             />
           </details>
@@ -39,7 +39,7 @@ export default function BlogArticleView({ blog }: { blog: PublicBlogDetail }) {
     <>
       <BlogArticleStructuredData blog={blog} />
 
-      <article>
+      <article className="min-w-0">
         <Link
           href="/blog"
           className="inline-flex items-center text-sm font-medium text-zinc-600 transition hover:text-primary"
@@ -47,18 +47,19 @@ export default function BlogArticleView({ blog }: { blog: PublicBlogDetail }) {
           ← Back to blog
         </Link>
 
-        <div className="mt-6 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
-          <div className="relative aspect-[21/9] max-h-80 w-full">
+        {/* Desktop: card. Mobile: flat article — hero full-bleed, no border/shadow inset. */}
+        <div className="mt-4 sm:mt-6 sm:overflow-hidden sm:rounded-2xl sm:border sm:border-zinc-200 sm:bg-white sm:shadow-sm">
+          <div className="relative aspect-[16/10] max-h-64 w-[calc(100%+2rem)] -mx-4 overflow-hidden sm:mx-0 sm:aspect-[21/9] sm:max-h-80 sm:w-full">
             <Image
               src={blog.featuredImageUrl}
               alt={blog.featuredImageAlt}
               fill
               className="object-cover"
               priority
-              sizes="100vw"
+              sizes="(max-width: 640px) 100vw, 896px"
             />
             <div className="absolute inset-0 bg-linear-to-t from-heading/60 to-transparent" />
-            <div className="absolute bottom-0 flex flex-wrap gap-2 p-6 sm:p-8">
+            <div className="absolute bottom-0 flex flex-wrap gap-2 p-4 sm:p-8">
               <span className="rounded-full bg-white/90 px-2.5 py-0.5 text-xs font-semibold text-heading">
                 {blog.categoryLabel}
               </span>
@@ -73,30 +74,30 @@ export default function BlogArticleView({ blog }: { blog: PublicBlogDetail }) {
             </div>
           </div>
 
-          <div className="px-6 py-8 sm:px-10 sm:py-10">
+          <div className="py-6 sm:px-10 sm:py-10">
             <header>
               <h1 className="text-2xl font-bold tracking-tight text-heading sm:text-3xl lg:text-4xl">
                 {blog.title}
               </h1>
-              <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-zinc-500">
+              <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-zinc-500 sm:mt-4">
                 <time dateTime={blog.publishDate}>
                   {formatBlogDisplayDate(blog.publishDate)}
                 </time>
               </div>
             </header>
 
-            <p className="mt-6 text-base leading-relaxed text-zinc-700 sm:text-lg">
+            <p className="mt-5 text-base leading-relaxed text-zinc-700 sm:mt-6 sm:text-lg">
               {blog.shortDescription}
             </p>
 
             <div
-              className="blog-article-content prose-spacing mt-8"
+              className="blog-article-content mt-6 min-w-0 sm:mt-8"
               dangerouslySetInnerHTML={{ __html: prepareBlogArticleHtml(blog.description) }}
             />
 
             <BlogFaqSection faqs={blog.faqs} />
 
-            <div className="mt-10 rounded-2xl bg-linear-to-br from-primary-soft via-white to-success-soft p-6 ring-1 ring-zinc-200">
+            <div className="mt-8 rounded-2xl bg-linear-to-br from-primary-soft via-white to-success-soft p-5 ring-1 ring-zinc-200 sm:mt-10 sm:p-6">
               <h2 className="text-lg font-bold text-heading">Ready to visit the Louvre?</h2>
               <p className="mt-2 text-sm text-zinc-600">
                 Book timed-entry tickets with audio guide — instant confirmation and mobile tickets.

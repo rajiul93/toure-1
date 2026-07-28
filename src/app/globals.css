@@ -332,12 +332,47 @@ body::after {
   border: 0;
   font-family: inherit;
   font-size: 0.875rem;
+  line-height: 1.375;
 }
 
 .blog-quill .ql-editor {
   min-height: var(--quill-min-height, 220px);
   padding: 1rem;
   color: var(--heading);
+  line-height: 1.375;
+}
+
+.blog-quill .ql-editor p,
+.blog-quill .ql-editor ol,
+.blog-quill .ql-editor ul,
+.blog-quill .ql-editor blockquote,
+.blog-quill .ql-editor li,
+.blog-quill .ql-editor .ql-table-cell,
+.blog-quill .ql-editor .ql-table-cell-inner {
+  line-height: inherit;
+}
+
+.blog-quill .ql-editor h2 {
+  font-size: 1.125rem;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.blog-quill .ql-editor h3 {
+  font-size: 1rem;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.blog-quill .ql-editor ol,
+.blog-quill .ql-editor ul {
+  margin: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.blog-quill .ql-editor li[data-list] {
+  margin: 0;
 }
 
 .blog-quill .ql-editor.ql-blank::before {
@@ -347,6 +382,10 @@ body::after {
 
 .blog-quill .ql-editor .ql-table-wrapper {
   scrollbar-width: auto;
+}
+
+.blog-quill .ql-editor .ql-table-cell {
+  padding: 4px 8px;
 }
 
 .blog-quill .ql-editor img {
@@ -368,7 +407,10 @@ body::after {
 .blog-article-content {
   color: rgb(63 63 70);
   font-size: 0.875rem;
-  line-height: 1.7;
+  /* Match Quill editor typography so saved content looks the same on the public page. */
+  line-height: 1.375;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 @media (min-width: 640px) {
@@ -377,8 +419,53 @@ body::after {
   }
 }
 
-.blog-article-content > * + * {
-  margin-top: 1.25rem;
+/* Quill blocks stack flush (margin: 0) — avoid adding extra gaps on the public page. */
+.blog-article-content > * {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.blog-article-content > h2:not(:first-child),
+.blog-article-content > h3:not(:first-child),
+.blog-article-content > h4:not(:first-child),
+.blog-article-content > .blog-table-scroll:not(:first-child),
+.blog-article-content > .ql-table-wrapper:not(:first-child),
+.blog-article-content > p:has(> img):not(:first-child) {
+  margin-top: 0.75rem;
+}
+
+.blog-article-content p + p {
+  margin-top: 0;
+}
+
+/* A truly empty element carries no authored content — nothing to show. */
+.blog-article-content p:empty {
+  display: none;
+}
+
+/* `<p><br></p>` is how Quill stores a blank line the author deliberately typed,
+   so it must stay visible or the public page won't match the editor. Rendered
+   as a fixed spacer (rather than the element's own line-height) so a blank
+   heading doesn't leave a much bigger gap than a blank paragraph. Runs of these
+   are already collapsed to one by `capConsecutiveEmptyBlocks`. */
+.blog-article-content p:has(> br:only-child),
+.blog-article-content h1:has(> br:only-child),
+.blog-article-content h2:has(> br:only-child),
+.blog-article-content h3:has(> br:only-child),
+.blog-article-content h4:has(> br:only-child),
+.blog-article-content h5:has(> br:only-child),
+.blog-article-content h6:has(> br:only-child) {
+  height: 0.75rem;
+  margin: 0;
+  overflow: hidden;
+}
+
+.blog-article-content p,
+.blog-article-content li,
+.blog-article-content blockquote,
+.blog-article-content td,
+.blog-article-content th {
+  line-height: inherit;
 }
 
 .blog-article-content h2,
@@ -390,11 +477,11 @@ body::after {
 }
 
 .blog-article-content h2 {
-  font-size: 1.25rem;
+  font-size: 1.125rem;
 }
 
 .blog-article-content h3 {
-  font-size: 1.125rem;
+  font-size: 1rem;
 }
 
 .blog-article-content a {
@@ -406,6 +493,7 @@ body::after {
 
 .blog-article-content ul,
 .blog-article-content ol {
+  margin: 0;
   padding-left: 1.25rem;
 }
 
@@ -418,7 +506,11 @@ body::after {
 }
 
 .blog-article-content li + li {
-  margin-top: 0.5rem;
+  margin-top: 0;
+}
+
+.blog-article-content li[data-list] {
+  list-style: inherit;
 }
 
 .blog-article-content img {
@@ -431,8 +523,19 @@ body::after {
 }
 
 .blog-article-content p:has(> img) {
-  margin-top: 1.5rem;
-  margin-bottom: 1.5rem;
+  max-width: 100%;
+}
+
+.blog-article-content p:has(> img) img[style*='width: 100%'],
+.blog-article-content p:has(> img) img[style*='width:100%'] {
+  width: 100% !important;
+  max-width: 100%;
+  height: auto !important;
+}
+
+.blog-article-content p:has(> img:only-child) {
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 .blog-article-content blockquote {
@@ -453,6 +556,27 @@ body::after {
   background: rgb(255 255 255);
 }
 
+@media (max-width: 639px) {
+  .blog-article-content .blog-table-scroll,
+  .blog-article-content .ql-table-wrapper.blog-table-scroll {
+    width: 100%;
+    max-width: 100%;
+    margin-inline: 0;
+    border-radius: 0.5rem;
+  }
+
+  .blog-article-content .blog-table-scroll table,
+  .blog-article-content .ql-table-wrapper.blog-table-scroll table,
+  .blog-article-content table {
+    font-size: 0.8125rem;
+  }
+
+  .blog-article-content th,
+  .blog-article-content td {
+    padding: 0.375rem 0.5rem;
+  }
+}
+
 .blog-article-content .blog-table-scroll table,
 .blog-article-content .ql-table-wrapper.blog-table-scroll table {
   width: max-content;
@@ -471,7 +595,7 @@ body::after {
 .blog-article-content th,
 .blog-article-content td {
   border: 1px solid rgb(228 228 231);
-  padding: 0.625rem 0.75rem;
+  padding: 0.5rem 0.625rem;
   text-align: left;
 }
 

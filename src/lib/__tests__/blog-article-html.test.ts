@@ -89,6 +89,36 @@ describe('sanitizeBlogHtml — save-time contract', () => {
     const dirty = '<p>Hello</p><script>alert(1)</script>'
     expect(sanitizeBlogHtml(dirty)).toBe('<p>Hello</p>')
   })
+
+  // Regression: saving used to delete every empty block, so a blank line the
+  // author typed in Quill vanished and the two paragraphs stuck together.
+  it('preserves a blank line the author typed between two paragraphs', () => {
+    const authored = '<p>Line one</p><p><br></p><p>Line two</p>'
+    expect(sanitizeBlogHtml(authored)).toBe(authored)
+  })
+
+  it('preserves several blank lines exactly as authored', () => {
+    const authored = '<p>a</p><p><br></p><p><br></p><p>b</p>'
+    expect(sanitizeBlogHtml(authored)).toBe(authored)
+  })
+
+  it('preserves an empty heading rather than silently dropping it', () => {
+    const authored = '<h3><br></h3><p>after</p>'
+    expect(sanitizeBlogHtml(authored)).toBe(authored)
+  })
+
+  it('still strips editor-internal artifacts, which are not authored content', () => {
+    const clean = sanitizeBlogHtml(
+      '<p><span class="ql-ui" contenteditable="false"></span>text</p>',
+    )
+    expect(clean).toBe('<p>text</p>')
+  })
+
+  it('round-trips: saving already-saved content changes nothing', () => {
+    const authored = '<p>one</p><p><br></p><p>two</p>'
+    const once = sanitizeBlogHtml(authored)
+    expect(sanitizeBlogHtml(once)).toBe(once)
+  })
 })
 
 describe('prepareBlogArticleHtml — sanitizes and still transforms', () => {
@@ -122,5 +152,21 @@ describe('prepareBlogArticleHtml — sanitizes and still transforms', () => {
 
   it('preserves falsy input contract', () => {
     expect(prepareBlogArticleHtml('')).toBe('')
+  })
+
+  it('keeps a single authored blank line when rendering', () => {
+    const clean = prepareBlogArticleHtml('<p>one</p><p><br></p><p>two</p>')
+    expect(clean).toBe('<p>one</p><p><br></p><p>two</p>')
+  })
+
+  it('collapses a stack of empty blocks around an embed to one blank line', () => {
+    // Quill leaves several of these around images; rendered raw they are a
+    // huge gap, but the fix must not remove the blank line entirely.
+    const clean = prepareBlogArticleHtml(
+      '<p>Intro</p><p><br></p><h3><br></h3><p><br></p><p><img src="https://cdn.test/a.png" alt="a"></p>',
+    )
+    expect(clean).toBe(
+      '<p>Intro</p><p><br></p><p><img src="https://cdn.test/a.png" alt="a"></p>',
+    )
   })
 })

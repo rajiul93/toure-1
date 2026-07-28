@@ -14,11 +14,11 @@ import {
 import { saveAdminBlog } from '@/lib/admin-blog-api'
 import { BLOG_FORM_OPTIONS } from '@/lib/blog-form-options'
 import DeferredImagePicker from '@/components/admin/blog/deferred-image-picker'
-import QuillEditor from '@/components/admin/blog/quill-editor'
 import { prepareBlogFormForSubmit } from '@/lib/quill/resolve-pending-images'
 import { defaultAltFromFileName } from '@/lib/image-alt'
 import { usePendingImageStore } from '@/store/pending-image-store'
 import { zodResolver } from '@hookform/resolvers/zod'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
@@ -30,6 +30,15 @@ import {
   type Path,
 } from 'react-hook-form'
 import { FaArrowLeft, FaPlus, FaTrash } from 'react-icons/fa6'
+
+const QuillEditor = dynamic(() => import('@/components/admin/blog/quill-editor'), {
+  ssr: false,
+  loading: () => (
+    <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-10 text-center text-sm text-zinc-500">
+      Loading editor…
+    </div>
+  ),
+})
 
 function fieldClass(hasError?: boolean) {
   return [
@@ -112,6 +121,8 @@ export default function BlogForm({ mode, blogId, initialValues }: BlogFormProps)
   const [slugEdited, setSlugEdited] = useState(mode === 'update')
   const [isSaving, setIsSaving] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [editorRevision, setEditorRevision] = useState(0)
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null)
 
   const addPendingFile = usePendingImageStore((state) => state.addFile)
   const removePendingField = usePendingImageStore((state) => state.removeField)
@@ -130,6 +141,7 @@ export default function BlogForm({ mode, blogId, initialValues }: BlogFormProps)
     watch,
     getValues,
     setValue,
+    reset,
     formState: { errors, isSubmitting },
   } = form
 
@@ -140,6 +152,8 @@ export default function BlogForm({ mode, blogId, initialValues }: BlogFormProps)
 
   const selectedTags = watch('basic_info.tags')
   const selectedKeywords = watch('basic_info.keywords')
+  const publishStatus = watch('basic_info.publish_status')
+  const blogSlug = watch('basic_info.slug')
   const featuredImageUrl = watch('basic_info.featured_image.url')
   const featuredImageAlt = watch('basic_info.featured_image.alt_text')
   const metaImageUrl = watch('meta_data.meta_image.url')
@@ -202,6 +216,12 @@ export default function BlogForm({ mode, blogId, initialValues }: BlogFormProps)
       const blog = await saveAdminBlog(mode, blogId, finalValues)
       usePendingImageStore.getState().clearAll()
 
+      if (blog.form) {
+        reset(blog.form)
+        setEditorRevision((revision) => revision + 1)
+      }
+      setLastSavedAt(blog.updatedAt)
+
       if (mode === 'create') {
         router.push(`/admin/blogs/${blog.id}`)
         router.refresh()
@@ -249,6 +269,25 @@ export default function BlogForm({ mode, blogId, initialValues }: BlogFormProps)
             </p>
             {submitError ? (
               <p className="mt-2 text-sm font-medium text-red-600">{submitError}</p>
+            ) : null}
+            {lastSavedAt ? (
+              <p className="mt-2 text-xs text-zinc-500">
+                Saved {new Date(lastSavedAt).toLocaleString()}
+                {publishStatus === 'publish' && blogSlug ? (
+                  <>
+                    {' '}
+                    ·{' '}
+                    <Link
+                      href={`/blog/${blogSlug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-primary hover:underline"
+                    >
+                      View live post
+                    </Link>
+                  </>
+                ) : null}
+              </p>
             ) : null}
           </div>
 
@@ -451,6 +490,7 @@ export default function BlogForm({ mode, blogId, initialValues }: BlogFormProps)
                   name="basic_info.description"
                   render={({ field }) => (
                     <QuillEditor
+                      key={`description-${editorRevision}`}
                       id="description"
                       value={field.value}
                       onChange={field.onChange}
@@ -638,6 +678,7 @@ export default function BlogForm({ mode, blogId, initialValues }: BlogFormProps)
                       name={`faqs.${index}.answer`}
                       render={({ field: answerField }) => (
                         <QuillEditor
+                          key={`faq-${index}-${editorRevision}`}
                           value={answerField.value}
                           onChange={answerField.onChange}
                           placeholder="Write the answer..."

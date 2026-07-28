@@ -1,15 +1,24 @@
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
+
+export const BLOG_POSTS_TAG = 'blog-posts'
+
+function blogSlugTag(slug: string) {
+  return `blog-${slug}`
+}
 
 /** Invalidate public blog pages after admin mutations. */
 export function revalidateBlogPaths(options?: { slug?: string; previousSlug?: string }) {
-  revalidatePath('/blog')
+  revalidateTag(BLOG_POSTS_TAG, { expire: 0 })
+  revalidatePath('/blog', 'page')
 
   if (options?.slug) {
-    revalidatePath(`/blog/${options.slug}`)
+    revalidateTag(blogSlugTag(options.slug), { expire: 0 })
+    revalidatePath(`/blog/${options.slug}`, 'page')
   }
 
   if (options?.previousSlug && options.previousSlug !== options.slug) {
-    revalidatePath(`/blog/${options.previousSlug}`)
+    revalidateTag(blogSlugTag(options.previousSlug), { expire: 0 })
+    revalidatePath(`/blog/${options.previousSlug}`, 'page')
   }
 
   revalidatePath('/sitemap.xml')
