@@ -30,7 +30,7 @@ export function getAttractionTours(config = getDefaultTourConfig()) {
       priceLabel: tour.priceLabel,
       durationLabel: tour.durationLabel,
       rating: tour.rating,
-      href: tour.href,
+      href: `/attraction-tours/${tour.slug}`,
     },
   ]
 }

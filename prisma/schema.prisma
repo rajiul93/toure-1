@@ -57,24 +57,24 @@ model Blog {
   categoryId        String
   countryId         String
   title             String
-  slug              String    @unique
+  slug              String        @unique
   shortDescription  String
-  description       String    @db.Text
-  featuredImageUrl  String    @default("")
-  featuredImageAlt  String    @default("")
-  galleryImages     Json      @default("[]")
-  isFeatured        Boolean   @default(false)
+  description       String        @db.Text
+  featuredImageUrl  String        @default("")
+  featuredImageAlt  String        @default("")
+  galleryImages     Json          @default("[]")
+  isFeatured        Boolean       @default(false)
   metaTitle         String
   metaDescription   String
-  metaImageUrl      String    @default("")
-  metaImageAlt      String    @default("")
-  fbMetaTitle       String    @default("")
-  fbMetaDescription String    @default("")
-  fbMetaImageUrl    String    @default("")
-  fbMetaImageAlt    String    @default("")
+  metaImageUrl      String        @default("")
+  metaImageAlt      String        @default("")
+  fbMetaTitle       String        @default("")
+  fbMetaDescription String        @default("")
+  fbMetaImageUrl    String        @default("")
+  fbMetaImageAlt    String        @default("")
   faqs              BlogFaq[]
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
   @@index([publishDate])
   @@index([publishStatus])
@@ -112,4 +112,67 @@ model SeoSettings {
   data      Json
   updatedBy String?
   updatedAt DateTime @updatedAt
+}
+
+/// A tour/experience rendered at /attraction-tours/[slug].
+/// List-shaped sections are JSON columns (same approach as Blog.galleryImages);
+/// reviews are relational because they are edited and ordered individually.
+model AttractionTour {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  title       String
+  isPublished Boolean @default(false)
+  isDeleted   Boolean @default(false)
+
+  ratingAverage Float @default(0)
+  reviewCount   Int   @default(0)
+
+  priceFrom        String
+  priceNote        String   @default("")
+  primaryCta       String   @default("Check availability")
+  secondaryOptions String[] @default([])
+
+  /// Quill-authored HTML, sanitized on save.
+  overviewDescription String @db.Text
+  highlightsHtml      String @default("") @db.Text
+
+  lovedTags   String[] @default([])
+  lovedQuotes String[] @default([])
+
+  /// Quill-authored HTML, sanitized on save.
+  meetingPointAddress  String @default("") @db.Text
+  questionsDescription String @default("")
+  questionsCtaLabel    String @default("Contact us")
+  questionsCtaHref     String @default("/about-us")
+
+  /// [{ id, url, alt, label, featured }] — hero collage + full gallery
+  galleryPhotos  Json @default("[]")
+  /// [{ id, title, items: string[] }] — inclusion / exclusion / know-before-you-go
+  /// [{ id, title, html }] — `html` is Quill-authored, sanitized on save.
+  importantInfo  Json @default("[]")
+  /// [{ url, alt }]
+  travelerPhotos Json @default("[]")
+
+  reviews AttractionTourReview[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isPublished])
+  @@index([isDeleted])
+  @@index([createdAt])
+}
+
+model AttractionTourReview {
+  id         String         @id @default(cuid())
+  tourId     String
+  tour       AttractionTour @relation(fields: [tourId], references: [id], onDelete: Cascade)
+  reviewer   String
+  /// Display string such as "Jul 2026" — matches the existing reviews data.
+  reviewDate String
+  rating     Int
+  text       String         @db.Text
+  sortOrder  Int            @default(0)
+
+  @@index([tourId])
 }

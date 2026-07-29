@@ -1,9 +1,9 @@
 'use client'
 
-import type { ItineraryStop } from '@/lib/itinerary-stops'
+import type { ItineraryStop } from '@/lib/tour-config.types'
 import { useEffect, useRef } from 'react'
 
-export type { ItineraryStop } from '@/lib/itinerary-stops'
+export type { ItineraryStop } from '@/lib/tour-config.types'
 
 type LeafletModule = typeof import('leaflet')
 

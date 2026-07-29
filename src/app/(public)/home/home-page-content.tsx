@@ -13,7 +13,7 @@ import TravelerReviews from './traveler-reviews'
 
 export default async function HomePageContent() {
   const { tourConfig } = await loadPublicConfigWithFallback()
-  const { louvreTour, faqs, importantInfo, bannerPhotos } = tourConfig
+  const { louvreTour, faqs, importantInfo, bannerPhotos, itineraryStops } = tourConfig
 
   return (
     <>
@@ -24,8 +24,8 @@ export default async function HomePageContent() {
         <ProductIntro louvreTour={louvreTour} />
         <TourOverview />
         <TourInclusions />
-        <TourItinerary louvreTour={louvreTour} />
-        <TourMeetingPoint />
+        <TourItinerary louvreTour={louvreTour} itineraryStops={itineraryStops} />
+        <TourMeetingPoint itineraryStops={itineraryStops} />
         <TourImportantInfo importantInfo={importantInfo} />
         <TourFaq faqs={faqs} />
         <TravelerReviews louvreTour={louvreTour} />

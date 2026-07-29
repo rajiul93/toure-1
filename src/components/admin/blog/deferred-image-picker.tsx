@@ -11,6 +11,11 @@ type DeferredImagePickerProps = {
   onSelect: (file: File) => void
   onClear: () => void
   error?: string
+  /**
+   * Thumbnail-sized horizontal layout for use inside a grid of many images,
+   * where the default full-width preview would make each row a screenful.
+   */
+  compact?: boolean
 }
 
 export default function DeferredImagePicker({
@@ -24,8 +29,85 @@ export default function DeferredImagePicker({
   onSelect,
   onClear,
   error,
+  compact = false,
 }: DeferredImagePickerProps) {
   const altInputId = `${id}_alt`
+
+  const fileInput = (
+    <input
+      id={id}
+      type="file"
+      accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+      className="sr-only"
+      onChange={(event) => {
+        const file = event.target.files?.[0]
+        if (!file) return
+        onSelect(file)
+        event.target.value = ''
+      }}
+    />
+  )
+
+  if (compact) {
+    return (
+      <div className="flex min-w-0 gap-3">
+        <div className="shrink-0">
+          {previewUrl ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={previewUrl}
+              alt={altText || 'Selected image preview'}
+              className="size-20 rounded-xl border border-zinc-200 object-cover"
+            />
+          ) : (
+            <div className="flex size-20 items-center justify-center rounded-xl border border-dashed border-zinc-300 bg-white text-center text-[10px] text-zinc-400">
+              No image
+            </div>
+          )}
+          {fileInput}
+        </div>
+
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <label
+              htmlFor={id}
+              className="cursor-pointer rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-xs font-semibold text-heading transition hover:bg-zinc-50"
+            >
+              {previewUrl ? 'Replace' : 'Choose image'}
+            </label>
+            {previewUrl ? (
+              <button
+                type="button"
+                onClick={onClear}
+                className="rounded-lg px-2 py-1 text-xs font-medium text-red-600 transition hover:bg-red-50"
+              >
+                Clear
+              </button>
+            ) : null}
+          </div>
+
+          {onAltTextChange ? (
+            <div>
+              <label htmlFor={altInputId} className="sr-only">
+                Alt text
+              </label>
+              <input
+                id={altInputId}
+                type="text"
+                value={altText}
+                onChange={(event) => onAltTextChange(event.target.value)}
+                placeholder="Alt text"
+                className="w-full rounded-lg border border-zinc-200 px-2.5 py-1.5 text-xs outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+              />
+              {altError ? <p className="mt-1 text-xs text-red-600">{altError}</p> : null}
+            </div>
+          ) : null}
+
+          {error ? <p className="text-xs text-red-600">{error}</p> : null}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div>
@@ -42,18 +124,7 @@ export default function DeferredImagePicker({
           Choose image
         </label>
 
-        <input
-          id={id}
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
-          className="sr-only"
-          onChange={(event) => {
-            const file = event.target.files?.[0]
-            if (!file) return
-            onSelect(file)
-            event.target.value = ''
-          }}
-        />
+        {fileInput}
 
         {previewUrl ? (
           <button

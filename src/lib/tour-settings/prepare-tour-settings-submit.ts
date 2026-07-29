@@ -2,13 +2,14 @@ import { uploadEditorImage } from '@/lib/quill/upload-editor-image'
 import type { TourSettingsFormValues } from '@/lib/validations/tour-settings.validation'
 import { usePendingImageStore } from '@/store/pending-image-store'
 
-export const TOUR_BANNER_FIELD_KEYS = [
-  'tour-banner-0',
-  'tour-banner-1',
-  'tour-banner-2',
-  'tour-banner-3',
-  'tour-banner-4',
-] as const
+/**
+ * Pending-upload key for a banner photo. Derived from the photo's stable id
+ * rather than its position, so reordering doesn't detach a queued file from
+ * its row.
+ */
+export function tourBannerFieldKey(photoId: string): string {
+  return `tour-banner-${photoId}`
+}
 
 async function resolveImageUrl(previewUrl: string, altText: string): Promise<string> {
   if (!previewUrl.startsWith('blob:')) {

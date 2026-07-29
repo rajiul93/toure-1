@@ -9,7 +9,11 @@ import {
 } from '@/lib/tour-image-specs'
 import { saveTourSettingsForm } from '@/lib/admin-tour-settings-api'
 import { defaultAltFromFileName } from '@/lib/image-alt'
-import { prepareTourSettingsForSubmit, TOUR_BANNER_FIELD_KEYS } from '@/lib/tour-settings/prepare-tour-settings-submit'
+import BannerGalleryField from '@/components/admin/tour-config/banner-gallery-field'
+import {
+  prepareTourSettingsForSubmit,
+  tourBannerFieldKey,
+} from '@/lib/tour-settings/prepare-tour-settings-submit'
 import {
   createEmptyTourSettingsValues,
   slugifyTourId,
@@ -156,6 +160,9 @@ export default function TourSettingsForm({ initialValues }: TourSettingsFormProp
 
   const faqsArray = useFieldArray({ control, name: 'faqs' })
   const importantInfoArray = useFieldArray({ control, name: 'importantInfo' })
+  const bannerPhotosArray = useFieldArray({ control, name: 'bannerPhotos' })
+  const itineraryStopsArray = useFieldArray({ control, name: 'itineraryStops' })
+  const bannerPhotos = watch('bannerPhotos')
 
   const keywords = watch('tour.keywords')
   const ogImageUrl = watch('tour.ogImage.url')
@@ -374,6 +381,185 @@ export default function TourSettingsForm({ initialValues }: TourSettingsFormProp
         </div>
       </SectionCard>
 
+      <SectionCard
+        title="Meeting point & itinerary"
+        description="Rows in the Meeting Point & Itinerary section, shown on the home page and on every attraction tour detail page. Stop numbers are assigned automatically from the order below."
+      >
+        <div className="mb-3 flex justify-end">
+          <button
+            type="button"
+            onClick={() =>
+              itineraryStopsArray.append({
+                id: `stop-${itineraryStopsArray.fields.length + 1}`,
+                kind: 'stop',
+                title: '',
+                subtitle: '',
+                timelineArea: '',
+                duration: '',
+                description: '',
+                address: '',
+                lat: 0,
+                lng: 0,
+                mapsUrl: '',
+              })
+            }
+            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-heading transition hover:bg-zinc-50"
+          >
+            <FaPlus className="size-3" aria-hidden="true" /> Add stop
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          {itineraryStopsArray.fields.map((field, index) => (
+            <div
+              key={field.id}
+              className="space-y-3 rounded-xl border border-zinc-100 bg-zinc-50/80 p-4"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
+                  Stop {index + 1}
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => itineraryStopsArray.move(index, index - 1)}
+                    disabled={index === 0}
+                    aria-label={`Move stop ${index + 1} up`}
+                    className="rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs font-semibold text-heading transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => itineraryStopsArray.move(index, index + 1)}
+                    disabled={index === itineraryStopsArray.fields.length - 1}
+                    aria-label={`Move stop ${index + 1} down`}
+                    className="rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs font-semibold text-heading transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    ↓
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => itineraryStopsArray.remove(index)}
+                    disabled={itineraryStopsArray.fields.length <= 1}
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <FaTrash className="size-3" aria-hidden="true" />
+                    Remove
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <FieldLabel
+                    htmlFor={`stop_kind_${index}`}
+                    label="Type"
+                    required
+                    hint="Meeting starts the route, End closes it"
+                  />
+                  <select
+                    id={`stop_kind_${index}`}
+                    className={fieldClass(Boolean(errors.itineraryStops?.[index]?.kind))}
+                    {...register(`itineraryStops.${index}.kind`)}
+                  >
+                    <option value="meeting">Meeting point</option>
+                    <option value="stop">Stop</option>
+                    <option value="end">End point</option>
+                  </select>
+                  <FieldError message={errors.itineraryStops?.[index]?.kind?.message} />
+                </div>
+                <TextInput
+                  id={`stop_id_${index}`}
+                  label="Stop id"
+                  required
+                  hint="Unique, used as the React key and map marker id"
+                  error={errors.itineraryStops?.[index]?.id?.message}
+                  {...register(`itineraryStops.${index}.id`)}
+                />
+              </div>
+
+              <TextInput
+                id={`stop_title_${index}`}
+                label="Title"
+                required
+                error={errors.itineraryStops?.[index]?.title?.message}
+                {...register(`itineraryStops.${index}.title`)}
+              />
+              <TextInput
+                id={`stop_subtitle_${index}`}
+                label="Subtitle"
+                hint="Shown under the title in the accordion"
+                error={errors.itineraryStops?.[index]?.subtitle?.message}
+                {...register(`itineraryStops.${index}.subtitle`)}
+              />
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <TextInput
+                  id={`stop_area_${index}`}
+                  label="Timeline area"
+                  hint="Short label in the Itinerary timeline"
+                  error={errors.itineraryStops?.[index]?.timelineArea?.message}
+                  {...register(`itineraryStops.${index}.timelineArea`)}
+                />
+                <TextInput
+                  id={`stop_duration_${index}`}
+                  label="Duration"
+                  hint="e.g. 45 min"
+                  error={errors.itineraryStops?.[index]?.duration?.message}
+                  {...register(`itineraryStops.${index}.duration`)}
+                />
+              </div>
+
+              <TextArea
+                id={`stop_description_${index}`}
+                label="Description"
+                rows={3}
+                error={errors.itineraryStops?.[index]?.description?.message}
+                {...register(`itineraryStops.${index}.description`)}
+              />
+              <TextInput
+                id={`stop_address_${index}`}
+                label="Address"
+                error={errors.itineraryStops?.[index]?.address?.message}
+                {...register(`itineraryStops.${index}.address`)}
+              />
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <TextInput
+                  id={`stop_lat_${index}`}
+                  label="Latitude"
+                  type="number"
+                  step="any"
+                  required
+                  error={errors.itineraryStops?.[index]?.lat?.message}
+                  {...register(`itineraryStops.${index}.lat`, { valueAsNumber: true })}
+                />
+                <TextInput
+                  id={`stop_lng_${index}`}
+                  label="Longitude"
+                  type="number"
+                  step="any"
+                  required
+                  error={errors.itineraryStops?.[index]?.lng?.message}
+                  {...register(`itineraryStops.${index}.lng`, { valueAsNumber: true })}
+                />
+              </div>
+
+              <TextInput
+                id={`stop_maps_${index}`}
+                label="Google Maps link"
+                hint="Opened by the “Open in Maps” link"
+                error={errors.itineraryStops?.[index]?.mapsUrl?.message}
+                {...register(`itineraryStops.${index}.mapsUrl`)}
+              />
+            </div>
+          ))}
+        </div>
+
+        <FieldError message={errors.itineraryStops?.message ?? errors.itineraryStops?.root?.message} />
+      </SectionCard>
+
       <SectionCard title="SEO & social image" description="Keywords and Open Graph image.">
         <div className="mb-5">
           <div className="mb-3 flex items-center justify-between gap-3">
@@ -471,74 +657,77 @@ export default function TourSettingsForm({ initialValues }: TourSettingsFormProp
             </li>
           </ul>
         </div>
-        <div className="space-y-6">
-          {([0, 1, 2, 3, 4] as const).map((index) => {
-            const bannerUrl = watch(`bannerPhotos.${index}.url`)
-            const bannerAlt = watch(`bannerPhotos.${index}.alt_text`)
-            const fieldKey = TOUR_BANNER_FIELD_KEYS[index]
-            const imageSpec = index === 0 ? TOUR_BANNER_FEATURED_SPEC : TOUR_BANNER_TILE_SPEC
-
-            return (
-              <div
-                key={fieldKey}
-                className="space-y-4 rounded-xl border border-zinc-100 bg-zinc-50/80 p-4"
-              >
-                <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
-                  {index === 0 ? 'Featured banner (main)' : `Banner image ${index + 1}`}
-                </p>
-                <TextInput
-                  id={`banner_label_${index}`}
-                  label="Badge label"
-                  hint="Short label shown on the photo"
-                  required
-                  error={errors.bannerPhotos?.[index]?.label?.message}
-                  {...register(`bannerPhotos.${index}.label`)}
-                />
-                <Controller
-                  control={control}
-                  name={`bannerPhotos.${index}.url`}
-                  render={({ field }) => (
-                    <DeferredImagePicker
-                      id={`tour_banner_${index}`}
-                      label="Banner image"
-                      hint={imageSpec.hint}
-                      previewUrl={field.value || undefined}
-                      altText={bannerAlt}
-                      altError={errors.bannerPhotos?.[index]?.alt_text?.message}
-                      error={errors.bannerPhotos?.[index]?.url?.message}
-                      onAltTextChange={(value) => {
-                        form.setValue(`bannerPhotos.${index}.alt_text`, value, {
-                          shouldDirty: true,
-                        })
-                        if (bannerUrl.startsWith('blob:')) {
-                          setPendingAltText(bannerUrl, value)
-                        }
-                      }}
-                      onSelect={(file) => {
-                        const previewUrl = replaceFieldFile(fieldKey, file)
-                        field.onChange(previewUrl)
-                        form.setValue(
-                          `bannerPhotos.${index}.alt_text`,
-                          defaultAltFromFileName(file.name),
-                          { shouldDirty: true },
-                        )
-                      }}
-                      onClear={() => {
-                        removePendingField(fieldKey)
-                        field.onChange('')
-                        form.setValue(
-                          `bannerPhotos.${index}.alt_text`,
-                          createEmptyTourSettingsValues().bannerPhotos[index].alt_text,
-                          { shouldDirty: true },
-                        )
-                      }}
-                    />
-                  )}
-                />
-              </div>
+        <BannerGalleryField
+          items={bannerPhotos}
+          errors={errors.bannerPhotos as never}
+          rootError={errors.bannerPhotos?.root?.message ?? errors.bannerPhotos?.message}
+          onAddFiles={(files) => {
+            files.forEach((file) => {
+              const id = crypto.randomUUID()
+              const previewUrl = replaceFieldFile(tourBannerFieldKey(id), file)
+              const alt = defaultAltFromFileName(file.name)
+              bannerPhotosArray.append({
+                id,
+                url: previewUrl,
+                alt_text: alt,
+                label: alt,
+                // The first photo ever added becomes the feature by default.
+                featured: bannerPhotos.length === 0,
+              })
+              setPendingAltText(previewUrl, alt)
+            })
+          }}
+          onLabelChange={(index, label) =>
+            form.setValue(`bannerPhotos.${index}.label`, label, { shouldDirty: true })
+          }
+          onAltTextChange={(index, value) => {
+            form.setValue(`bannerPhotos.${index}.alt_text`, value, { shouldDirty: true })
+            const url = bannerPhotos[index]?.url
+            if (url?.startsWith('blob:')) setPendingAltText(url, value)
+          }}
+          onSelectFile={(index, file) => {
+            const photo = bannerPhotos[index]
+            if (!photo) return
+            const previewUrl = replaceFieldFile(tourBannerFieldKey(photo.id), file)
+            form.setValue(`bannerPhotos.${index}.url`, previewUrl, { shouldDirty: true })
+            form.setValue(
+              `bannerPhotos.${index}.alt_text`,
+              defaultAltFromFileName(file.name),
+              { shouldDirty: true },
             )
-          })}
-        </div>
+          }}
+          onClearImage={(index) => {
+            const photo = bannerPhotos[index]
+            if (!photo) return
+            removePendingField(tourBannerFieldKey(photo.id))
+            form.setValue(`bannerPhotos.${index}.url`, '', { shouldDirty: true })
+            form.setValue(`bannerPhotos.${index}.alt_text`, '', { shouldDirty: true })
+          }}
+          onRemove={(index) => {
+            const photo = bannerPhotos[index]
+            if (photo) removePendingField(tourBannerFieldKey(photo.id))
+            const wasFeatured = photo?.featured
+            bannerPhotosArray.remove(index)
+            // Never leave the gallery without a feature image.
+            if (wasFeatured) {
+              form.setValue('bannerPhotos.0.featured', true, { shouldDirty: true })
+            }
+          }}
+          onReorder={(from, to) => {
+            if (to < 0 || to >= bannerPhotos.length) return
+            bannerPhotosArray.move(from, to)
+            form.setValue('bannerPhotos', form.getValues('bannerPhotos'), {
+              shouldDirty: true,
+            })
+          }}
+          onSetFeatured={(index) => {
+            bannerPhotos.forEach((_, i) => {
+              form.setValue(`bannerPhotos.${i}.featured`, i === index, {
+                shouldDirty: true,
+              })
+            })
+          }}
+        />
       </SectionCard>
 
       <SectionCard title="FAQs" description="Home page frequently asked questions.">

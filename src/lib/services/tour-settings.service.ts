@@ -16,10 +16,23 @@ async function loadTourConfigFromDB() {
   return resolveTourConfig(input)
 }
 
+/**
+ * Bump whenever `ResolvedTourConfig` gains or changes a field. Entries cached
+ * under the old key still hold the old shape, and consumers that read a new
+ * field would get `undefined` and crash — a stale cache is not just stale data
+ * here, it is a runtime error. v3 added `itineraryStops`.
+ */
+const TOUR_CONFIG_CACHE_KEY = 'tour-config-v3'
+
 export const getTourConfigFromDB = unstable_cache(
   loadTourConfigFromDB,
-  ['tour-config-v2'],
-  { tags: ['tour-config'] },
+  [TOUR_CONFIG_CACHE_KEY],
+  {
+    tags: ['tour-config'],
+    // Admin saves revalidate the tag; this only bounds how long a bad or stale
+    // entry can survive if that ever fails to fire.
+    revalidate: 300,
+  },
 )
 
 export async function getTourSettingsFormFromDB(): Promise<TourSettingsFormValues> {

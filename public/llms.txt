@@ -17,7 +17,7 @@
 - /about-us — About Day Tour Paris
 - /blog — Louvre travel tips and planning articles
 - /reviews — Filterable traveler reviews
-- /attraction-tours — Paris museum tour listings (Louvre featured)
+- /attraction-tours — single Paris attraction tour listings
 - /legal/privacy — Privacy policy
 - /legal/terms — Terms and conditions
 - /legal/cancellation — Cancellation and refund policy

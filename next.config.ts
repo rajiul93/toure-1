@@ -33,6 +33,18 @@ const nextConfig: NextConfig = {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: r2ImageRemotePattern ? [r2ImageRemotePattern] : [],
   },
+  async redirects() {
+    return [
+      {
+        // The Louvre package is a combine package presented on the home page,
+        // not a single attraction tour. It used to have a detail page here, so
+        // old links keep working and pass their ranking to where it now lives.
+        source: "/attraction-tours/louvre-museum",
+        destination: "/",
+        statusCode: 301,
+      },
+    ];
+  },
   async headers() {
     return [
       {

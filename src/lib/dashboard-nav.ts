@@ -9,6 +9,7 @@ export type DashboardNavItem = {
 export const DASHBOARD_NAV: Record<AppRole, DashboardNavItem[]> = {
   admin: [
     { href: '/admin', label: 'Dashboard', icon: 'home' },
+    { href: '/admin/attraction-tours', label: 'Attraction tours', icon: 'tour' },
     { href: '/admin/blogs', label: 'Blogs', icon: 'blog' },
     { href: '/admin/site-config', label: 'Site config', icon: 'settings' },
     { href: '/admin/tour-config', label: 'Tour config', icon: 'tour' },

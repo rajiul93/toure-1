@@ -1,6 +1,6 @@
 import type React from 'react'
 import type { ResolvedTourConfig } from '@/lib/tour-config.types'
-import { TIMELINE_STOPS } from '@/lib/itinerary-stops'
+
 
 interface TimelineProps {
   className?: string
@@ -29,7 +29,13 @@ function Badge({ children, className = '' }: { children: React.ReactNode; classN
 export default function TourItinerary({
   louvreTour,
   className = '',
-}: TimelineProps & { louvreTour: ResolvedTourConfig['louvreTour'] }) {
+  itineraryStops = [],
+}: TimelineProps & {
+  louvreTour: ResolvedTourConfig['louvreTour']
+  itineraryStops?: ResolvedTourConfig['itineraryStops']
+}) {
+  // The end marker belongs to the map, not the timeline.
+  const timelineStops = itineraryStops.filter((stop) => stop.kind !== 'end')
 
   return (
     <section
@@ -49,9 +55,9 @@ export default function TourItinerary({
         </p>
 
         <ol className="space-y-10">
-          {TIMELINE_STOPS.map((item, index) => (
+          {timelineStops.map((item, index) => (
             <li key={item.id} className="group relative transition-all duration-300 hover:translate-x-1">
-              {index !== TIMELINE_STOPS.length - 1 ? (
+              {index !== timelineStops.length - 1 ? (
                 <div
                   className="absolute left-3 top-8 h-full w-0.5 bg-linear-to-b from-success via-success-muted to-white opacity-60 transition-opacity duration-300 group-hover:opacity-100"
                   aria-hidden="true"

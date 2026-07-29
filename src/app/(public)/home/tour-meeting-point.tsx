@@ -1,7 +1,7 @@
 'use client'
 
 import { IconChevronDown, IconExternalLink } from '@/components/icons'
-import { ITINERARY_STOPS, type ItineraryStop } from '@/lib/itinerary-stops'
+import type { ItineraryStop, ResolvedTourConfig } from '@/lib/tour-config.types'
 import { useEffect, useId, useRef, useState } from 'react'
 import { FaFlagCheckered, FaLocationDot } from 'react-icons/fa6'
 import MeetingPointMap from './meeting-point-map'
@@ -136,9 +136,17 @@ function ItineraryAccordionItem({
   )
 }
 
-export default function TourMeetingPoint() {
-  const [activeId, setActiveId] = useState(ITINERARY_STOPS[0].id)
-  const [openId, setOpenId] = useState<string | null>(ITINERARY_STOPS[ITINERARY_STOPS.length - 1].id)
+export default function TourMeetingPoint({
+  // Defaulted so a config missing the field renders an empty section instead
+  // of throwing on `itineraryStops[0]`.
+  itineraryStops = [],
+}: {
+  itineraryStops?: ResolvedTourConfig['itineraryStops']
+}) {
+  const [activeId, setActiveId] = useState(itineraryStops[0]?.id ?? '')
+  const [openId, setOpenId] = useState<string | null>(
+    itineraryStops[itineraryStops.length - 1]?.id ?? null,
+  )
 
   const handleSelect = (id: string) => {
     setActiveId(id)
@@ -161,13 +169,13 @@ export default function TourMeetingPoint() {
       <div className="mt-5 grid gap-5 lg:grid-cols-2 lg:items-stretch">
         <div className="overflow-hidden rounded-2xl border border-zinc-200 ">
           <ul className="p-4 sm:p-5">
-            {ITINERARY_STOPS.map((stop, index) => (
+            {itineraryStops.map((stop, index) => (
               <ItineraryAccordionItem
                 key={stop.id}
                 stop={stop}
                 active={activeId === stop.id}
                 open={openId === stop.id}
-                isLast={index === ITINERARY_STOPS.length - 1}
+                isLast={index === itineraryStops.length - 1}
                 onSelect={() => handleSelect(stop.id)}
               />
             ))}
@@ -175,7 +183,7 @@ export default function TourMeetingPoint() {
         </div>
 
         <div className="relative isolate z-0 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
-          <MeetingPointMap stops={ITINERARY_STOPS} activeId={activeId} />
+          <MeetingPointMap stops={itineraryStops} activeId={activeId} />
         </div>
       </div>
     </section>

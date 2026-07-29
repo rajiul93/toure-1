@@ -116,8 +116,20 @@ function BannerGrid({
   )
 }
 
-export default function Banner({ bannerPhotos }: { bannerPhotos: BannerPhoto[] }) {
+export default function Banner({
+  bannerPhotos,
+  galleryPhotos,
+  viewAllLabel,
+}: {
+  /** The photos shown in the collage — the layouts expect about five. */
+  bannerPhotos: BannerPhoto[]
+  /** Optional larger set the lightbox can browse. Defaults to `bannerPhotos`. */
+  galleryPhotos?: BannerPhoto[]
+  /** Renders a "view all" button when provided. */
+  viewAllLabel?: string
+}) {
   const [lightboxPhoto, setLightboxPhoto] = useState<BannerPhoto | null>(null)
+  const allPhotos = galleryPhotos?.length ? galleryPhotos : bannerPhotos
 
   // The tablet and grid layouts destructure three photos and read `.src` on
   // each; a tour config saved with fewer would crash the whole page.
@@ -125,7 +137,16 @@ export default function Banner({ bannerPhotos }: { bannerPhotos: BannerPhoto[] }
 
   return (
     <>
-      <section className="h-full w-full min-h-0" aria-label="Photo gallery">
+      <section className="relative h-full w-full min-h-0" aria-label="Photo gallery">
+        {viewAllLabel ? (
+          <button
+            type="button"
+            onClick={() => setLightboxPhoto(allPhotos[0])}
+            className="absolute bottom-3 right-3 z-20 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold text-heading shadow-md transition hover:bg-white sm:text-sm"
+          >
+            {viewAllLabel}
+          </button>
+        ) : null}
         <div className="h-full md:hidden">
           <BannerSlider bannerPhotos={bannerPhotos} onPhotoSelect={setLightboxPhoto} />
         </div>
@@ -137,7 +158,14 @@ export default function Banner({ bannerPhotos }: { bannerPhotos: BannerPhoto[] }
         </div>
       </section>
 
-      <BannerPhotoLightbox photo={lightboxPhoto} onClose={() => setLightboxPhoto(null)} />
+      {/* Keyed per open so the lightbox remounts and starts on the clicked
+          photo without a prop-syncing effect. */}
+      <BannerPhotoLightbox
+        key={lightboxPhoto ? allPhotos.indexOf(lightboxPhoto) : 'closed'}
+        photo={lightboxPhoto}
+        photos={allPhotos}
+        onClose={() => setLightboxPhoto(null)}
+      />
     </>
   )
 }

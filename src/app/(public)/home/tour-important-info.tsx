@@ -87,7 +87,7 @@ export default function TourImportantInfo({
         Important information
       </h2>
 
-      <div className="mt-5 divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white">
+      <div className="mt-5 divide-y divide-zinc-200 rounded-2xl border border-zinc-200">
         {importantInfo.map((section) => (
           <AccordionItem key={section.id} title={section.title} items={section.items} />
         ))}
