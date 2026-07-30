@@ -1,27 +1,14 @@
 'use client'
 
 import ReviewDate from '@/components/review-date'
-import ReviewFilterChips from '@/components/review-filter-chips'
 import ReviewStars from '@/components/review-stars'
 import PageHero from '@/components/page-hero'
 import { IconStar } from '@/components/icons'
 import { useTourConfig } from '@/components/tour-config/tour-config-provider'
-import {
-  FILTER_TAGS,
-  RATING_BREAKDOWN,
-  REVIEWS,
-  type FilterId,
-} from '@/lib/reviews-data'
-import { useState } from 'react'
+import { FILTER_TAGS, RATING_BREAKDOWN, REVIEWS } from '@/lib/reviews-data'
 
 export default function ReviewsPageContent() {
   const { louvreTour } = useTourConfig()
-  const [activeFilter, setActiveFilter] = useState<FilterId>('all')
-
-  const filteredReviews =
-    activeFilter === 'all'
-      ? REVIEWS
-      : REVIEWS.filter((review) => review.tags.includes(activeFilter))
 
   return (
     <div>
@@ -65,14 +52,8 @@ export default function ReviewsPageContent() {
         </aside>
 
         <div>
-          <ReviewFilterChips activeFilter={activeFilter} onChange={setActiveFilter} />
-
-          <p className="sr-only" aria-live="polite">
-            Showing {filteredReviews.length} review{filteredReviews.length === 1 ? '' : 's'}
-          </p>
-
-          <ul className="mt-6 flex flex-col gap-4">
-            {filteredReviews.map((review) => (
+          <ul className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+            {REVIEWS.map((review) => (
               <li key={review.id}>
                 <article className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
                   <div className="flex items-center justify-between gap-2">
