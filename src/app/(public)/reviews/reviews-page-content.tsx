@@ -3,18 +3,20 @@ import ReviewStars from '@/components/review-stars'
 import PageHero from '@/components/page-hero'
 import { IconStar } from '@/components/icons'
 import { getTourConfigFromDB } from '@/lib/services/tour-settings.service'
-import { resolveAttractionTourDetail } from '@/lib/attraction-tour-public'
-
-const LOUVRE_SLUG = 'louvre-museum'
+import { resolveAttractionTourSlugs, resolveAttractionTourDetail } from '@/lib/attraction-tour-public'
 
 export default async function ReviewsPageContent() {
-  const [tourConfig, tour] = await Promise.all([
-    getTourConfigFromDB(),
-    resolveAttractionTourDetail(LOUVRE_SLUG),
-  ])
+  const tourConfig = await getTourConfigFromDB()
+
+  // Get all attraction tours and collect all their reviews
+  const slugs = await resolveAttractionTourSlugs()
+  const tours = await Promise.all(slugs.map((slug) => resolveAttractionTourDetail(slug)))
+
+  const allReviews = tours
+    .filter((tour): tour is Exclude<typeof tour, null> => tour !== null)
+    .flatMap((tour) => tour.reviews.list)
 
   const { louvreTour } = tourConfig
-  const reviews = tour?.reviews.list ?? []
 
   return (
     <div>
@@ -37,7 +39,7 @@ export default async function ReviewsPageContent() {
       </PageHero>
 
       <div className="mt-8">
-        {reviews.length === 0 ? (
+        {allReviews.length === 0 ? (
           <div className="rounded-2xl border border-zinc-200 bg-white p-8 text-center shadow-sm">
             <p className="text-sm text-zinc-600">
               Tour reviews will appear here once travelers start sharing their experiences.
@@ -45,7 +47,7 @@ export default async function ReviewsPageContent() {
           </div>
         ) : (
           <ul className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            {reviews.map((review, index) => (
+            {allReviews.map((review, index) => (
               <li key={`${review.reviewer}-${index}`}>
                 <article className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
                   <div className="flex items-center justify-between gap-2">
