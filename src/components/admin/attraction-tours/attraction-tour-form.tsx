@@ -249,10 +249,12 @@ export default function AttractionTourForm({
   const galleryArray = useFieldArray({ control, name: 'gallery' })
   const reviewsArray = useFieldArray({ control, name: 'reviews' })
   const importantArray = useFieldArray({ control, name: 'importantInformation' })
+  const travelerPhotosArray = useFieldArray({ control, name: 'travelerPhotos' })
 
   const gallery = watch('gallery')
   const reviews = watch('reviews')
   const importantInformation = watch('importantInformation')
+  const travelerPhotos = watch('travelerPhotos')
 
   // Falling back to the site-wide widget silently books a DIFFERENT experience,
   // so the admin has to be told rather than left to discover it from a booking.
@@ -277,6 +279,17 @@ export default function AttractionTourForm({
         }),
       )
 
+      const travelerPhotosProcessed = await Promise.all(
+        values.travelerPhotos.map(async (photo) => {
+          if (!photo.url.startsWith('blob:')) return photo
+          const file = usePendingImageStore
+            .getState()
+            .getFileByPreviewUrl(photo.url)
+          if (!file) throw new Error(`Traveler photo is missing. Select it again.`)
+          return { ...photo, url: await uploadEditorImage(file, photo.alt) }
+        }),
+      )
+
       const ogImageUrl = values.seo.ogImage.url.startsWith('blob:')
         ? await (async () => {
             const file = usePendingImageStore
@@ -290,6 +303,7 @@ export default function AttractionTourForm({
       const prepared = {
         ...values,
         gallery,
+        travelerPhotos: travelerPhotosProcessed,
         seo: { ...values.seo, ogImage: { ...values.seo.ogImage, url: ogImageUrl } },
       }
       const saved = await saveAdminAttractionTour(mode, tourId, prepared)
@@ -488,6 +502,92 @@ export default function AttractionTourForm({
             })
           }}
         />
+      </SectionCard>
+
+      <SectionCard title="Traveler photos" description="Photos shared by visitors exploring the museum.">
+        <div className="space-y-4">
+          <button
+            type="button"
+            onClick={() => {
+              const input = document.createElement('input')
+              input.type = 'file'
+              input.accept = 'image/*'
+              input.multiple = true
+              input.onchange = (e) => {
+                const files = Array.from((e.target as HTMLInputElement).files || [])
+                files.forEach((file) => {
+                  const id = crypto.randomUUID()
+                  const previewUrl = replaceFieldFile(`traveler-photo-${id}`, file)
+                  const alt = defaultAltFromFileName(file.name)
+                  travelerPhotosArray.append({
+                    url: previewUrl,
+                    alt,
+                  })
+                  setPendingAltText(previewUrl, alt)
+                })
+              }
+              input.click()
+            }}
+            className="inline-flex items-center gap-1.5 rounded-sm border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-heading transition hover:bg-zinc-50"
+          >
+            <FaPlus className="size-3" aria-hidden="true" /> Add photos
+          </button>
+        </div>
+
+        <div className="mt-4 space-y-3">
+          {travelerPhotos.length === 0 ? (
+            <p className="rounded-sm border border-dashed border-zinc-200 px-4 py-6 text-center text-sm text-zinc-400">
+              No traveler photos yet — add some to showcase visitor experiences.
+            </p>
+          ) : null}
+
+          {travelerPhotos.map((photo, index) => (
+            <div key={index} className="rounded-sm border border-zinc-200 bg-zinc-50 p-4">
+              <div className="flex gap-4">
+                <div className="relative size-24 shrink-0 overflow-hidden rounded-sm bg-zinc-100">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={photo.url}
+                    alt={photo.alt}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                <div className="min-w-0 flex-1 space-y-3">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-heading">Alt text</label>
+                    <input
+                      className={inputClass}
+                      placeholder="Describe the photo for accessibility"
+                      value={photo.alt}
+                      onChange={(e) => {
+                        setValue(`travelerPhotos.${index}.alt`, e.target.value, {
+                          shouldDirty: true,
+                        })
+                        if (photo.url.startsWith('blob:')) {
+                          setPendingAltText(photo.url, e.target.value)
+                        }
+                      }}
+                    />
+                    <FieldError message={errors.travelerPhotos?.[index]?.alt?.message} />
+                  </div>
+                  <button
+                    type="button"
+                    aria-label={`Remove photo ${index + 1}`}
+                    onClick={() => {
+                      if (photo.url.startsWith('blob:')) {
+                        removePendingField(`traveler-photo-${photo.url.split('/').pop()}`)
+                      }
+                      travelerPhotosArray.remove(index)
+                    }}
+                    className="inline-flex items-center gap-1 rounded-sm px-2 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-50"
+                  >
+                    <FaTrash className="size-3" aria-hidden="true" /> Remove
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </SectionCard>
 
       <SectionCard title="Booking panel" description="Price box shown beside the gallery.">
