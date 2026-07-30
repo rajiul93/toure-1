@@ -12,6 +12,26 @@ export default function ReviewsPageContent() {
 
   return (
     <div>
+      <aside className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm mb-8">
+        <h2 className="text-sm font-semibold text-heading">Rating breakdown</h2>
+        <ul className="mt-4 space-y-2.5">
+          {RATING_BREAKDOWN.map((row) => (
+            <li key={row.stars} className="flex items-center gap-3 text-sm">
+              <span className="w-8 shrink-0 tabular-nums text-zinc-600">{row.stars}★</span>
+              <div className="h-2 flex-1 overflow-hidden rounded-full bg-zinc-100">
+                <div
+                  className="h-full rounded-full bg-primary transition-all"
+                  style={{ width: `${row.percent}%` }}
+                />
+              </div>
+              <span className="w-8 shrink-0 text-right tabular-nums text-zinc-500">
+                {row.percent}%
+              </span>
+            </li>
+          ))}
+        </ul>
+      </aside>
+
       <PageHero
         eyebrow="Traveler reviews"
         title="What visitors say about the Louvre experience"
@@ -30,30 +50,9 @@ export default function ReviewsPageContent() {
         </div>
       </PageHero>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[280px_1fr] lg:items-start">
-        <aside className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-          <h2 className="text-sm font-semibold text-heading">Rating breakdown</h2>
-          <ul className="mt-4 space-y-2.5">
-            {RATING_BREAKDOWN.map((row) => (
-              <li key={row.stars} className="flex items-center gap-3 text-sm">
-                <span className="w-8 shrink-0 tabular-nums text-zinc-600">{row.stars}★</span>
-                <div className="h-2 flex-1 overflow-hidden rounded-full bg-zinc-100">
-                  <div
-                    className="h-full rounded-full bg-primary transition-all"
-                    style={{ width: `${row.percent}%` }}
-                  />
-                </div>
-                <span className="w-8 shrink-0 text-right tabular-nums text-zinc-500">
-                  {row.percent}%
-                </span>
-              </li>
-            ))}
-          </ul>
-        </aside>
-
-        <div>
-          <ul className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-            {REVIEWS.map((review) => (
+      <div className="mt-8">
+        <ul className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          {REVIEWS.map((review) => (
               <li key={review.id}>
                 <article className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
                   <div className="flex items-center justify-between gap-2">
@@ -84,7 +83,6 @@ export default function ReviewsPageContent() {
               </li>
             ))}
           </ul>
-        </div>
       </div>
     </div>
   )
