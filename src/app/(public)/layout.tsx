@@ -4,6 +4,7 @@ import Navbar from '@/components/navbar'
 import PublicPageShell from '@/components/public-page-shell'
 import { SiteConfigProvider } from '@/components/site-config/site-config-provider'
 import { TourConfigProvider } from '@/components/tour-config/tour-config-provider'
+import { resolveAttractionTourBookingTargets } from '@/lib/attraction-tour-public'
 import { loadPublicConfigWithFallback } from '@/lib/public-config'
 
 export default async function PublicLayout({
@@ -11,7 +12,10 @@ export default async function PublicLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const { siteConfig, tourConfig } = await loadPublicConfigWithFallback()
+  const [{ siteConfig, tourConfig }, bookingTargets] = await Promise.all([
+    loadPublicConfigWithFallback(),
+    resolveAttractionTourBookingTargets(),
+  ])
 
   return (
     <SiteConfigProvider config={siteConfig}>
@@ -19,7 +23,7 @@ export default async function PublicLayout({
         <Navbar />
         <main className="mx-auto w-full max-w-7xl flex-1 px-4">
           <BookingLayoutProvider>
-            <PublicPageShell>{children}</PublicPageShell>
+            <PublicPageShell bookingTargets={bookingTargets}>{children}</PublicPageShell>
           </BookingLayoutProvider>
         </main>
         <Footer />

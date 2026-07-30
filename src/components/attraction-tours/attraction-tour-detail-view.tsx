@@ -36,8 +36,13 @@ export default function AttractionTourDetailView({
   tour: AttractionTourDetail
   itineraryStops: ResolvedTourConfig['itineraryStops']
 }) {
+  // No Bókun experience of its own means the calendar is intentionally absent
+  // (see `BookingUnavailableNotice`), so the CTAs that scroll to it must go too
+  // rather than sending visitors to a booking box that isn't there.
+  const bookingActive = Boolean(tour.bokun.channel && tour.bokun.experienceId)
+
   return (
-    <div className="pb-24 lg:pb-0">
+    <div className={bookingActive ? 'pb-24 lg:pb-0' : ''}>
       <nav aria-label="Breadcrumb" className="text-sm text-zinc-500">
         <ol className="flex flex-wrap items-center gap-1.5">
           {tour.breadcrumb.map((item, index) => (
@@ -92,9 +97,15 @@ export default function AttractionTourDetailView({
             </li>
           ))}
         </ul>
-        <BookNowLink className="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary-hover">
-          {tour.bookingPanel.primaryCta}
-        </BookNowLink>
+        {bookingActive ? (
+          <BookNowLink className="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary-hover">
+            {tour.bookingPanel.primaryCta}
+          </BookNowLink>
+        ) : (
+          <p className="mt-5 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-center text-sm text-zinc-600">
+            Online booking is not active for this tour yet.
+          </p>
+        )}
       </div>
 
       <section className="mt-8 border-t border-zinc-200 py-8" aria-labelledby="why-travelers-heading">
@@ -174,17 +185,19 @@ export default function AttractionTourDetailView({
         items={tour.alsoBought}
       />
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200 bg-white/95 p-3 backdrop-blur lg:hidden">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
-          <div>
-            <p className="text-xs text-zinc-500">From</p>
-            <p className="text-lg font-bold text-heading">{tour.bookingPanel.priceFrom}</p>
+      {bookingActive ? (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200 bg-white/95 p-3 backdrop-blur lg:hidden">
+          <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
+            <div>
+              <p className="text-xs text-zinc-500">From</p>
+              <p className="text-lg font-bold text-heading">{tour.bookingPanel.priceFrom}</p>
+            </div>
+            <BookNowLink className="inline-flex shrink-0 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary-hover">
+              {tour.bookingPanel.primaryCta}
+            </BookNowLink>
           </div>
-          <BookNowLink className="inline-flex shrink-0 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary-hover">
-            {tour.bookingPanel.primaryCta}
-          </BookNowLink>
         </div>
-      </div>
+      ) : null}
     </div>
   )
 }

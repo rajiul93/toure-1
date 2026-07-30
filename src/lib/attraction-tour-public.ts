@@ -11,6 +11,7 @@ import {
   ATTRACTION_TOURS_TAG,
   attractionTourSlugTag,
 } from '@/lib/attraction-tour-revalidation'
+import type { BokunTarget } from '@/components/booking-target-context'
 import { prisma } from '@/lib/db'
 import { unstable_cache } from 'next/cache'
 import { cache } from 'react'
@@ -93,6 +94,60 @@ export const resolvePublishedAttractionTourCards = cache(
     } catch (error) {
       console.error('[attraction-tours] failed to list published tours', error)
       return []
+    }
+  },
+)
+
+/**
+ * slug -> Bokun target, for published tours that set BOTH halves. The public
+ * layout uses this to retarget the globally-mounted booking sidebar, because a
+ * page cannot pass props up to it. Only tours with an override appear here, so
+ * the map is normally tiny.
+ */
+const readBookingTargets = unstable_cache(
+  async () => {
+    const tours = await prisma.attractionTour.findMany({
+      where: {
+        isPublished: true,
+        isDeleted: false,
+        NOT: { bokunChannel: '', bokunExperienceId: '' },
+      },
+      select: {
+        slug: true,
+        title: true,
+        priceFrom: true,
+        bokunChannel: true,
+        bokunExperienceId: true,
+      },
+    })
+
+    const map: Record<string, BokunTarget> = {}
+
+    for (const tour of tours) {
+      if (tour.bokunChannel && tour.bokunExperienceId) {
+        map[tour.slug] = {
+          channel: tour.bokunChannel,
+          experienceId: tour.bokunExperienceId,
+          title: tour.title,
+          priceLabel: tour.priceFrom,
+          detailsHref: `/attraction-tours/${tour.slug}`,
+        }
+      }
+    }
+
+    return map
+  },
+  ['attraction-tour-booking-targets'],
+  { tags: [ATTRACTION_TOURS_TAG], revalidate: CACHE_REVALIDATE_SECONDS },
+)
+
+export const resolveAttractionTourBookingTargets = cache(
+  async (): Promise<Record<string, BokunTarget>> => {
+    try {
+      return await readBookingTargets()
+    } catch (error) {
+      console.error('[attraction-tours] failed to load booking targets', error)
+      return {}
     }
   },
 )

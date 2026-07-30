@@ -1,6 +1,7 @@
 'use client'
 
 import BannerGalleryField from '@/components/admin/tour-config/banner-gallery-field'
+import DeferredImagePicker from '@/components/admin/blog/deferred-image-picker'
 import { saveAdminAttractionTour } from '@/lib/admin-attraction-tour-api'
 import { defaultAltFromFileName } from '@/lib/image-alt'
 import { uploadEditorImage } from '@/lib/quill/upload-editor-image'
@@ -49,6 +50,18 @@ function SectionCard({
     </section>
   )
 }
+
+/** Stable pending-upload key for this form's social image. */
+const OG_IMAGE_FIELD_KEY = 'attraction-tour-og-image'
+
+/**
+ * Shown as placeholders so the admin can see which widget a tour falls back to.
+ * These are the same env values `site-config.defaults.ts` seeds the site-wide
+ * Bokun settings from.
+ */
+const SITE_BOKUN_CHANNEL = process.env.NEXT_PUBLIC_BOKUN_CHANNEL || 'Site default channel'
+const SITE_BOKUN_EXPERIENCE_ID =
+  process.env.NEXT_PUBLIC_BOKUN_EXPERIENCE_ID || 'Site default experience'
 
 const inputClass =
   'w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20'
@@ -241,6 +254,10 @@ export default function AttractionTourForm({
   const reviews = watch('reviews')
   const importantInformation = watch('importantInformation')
 
+  // Falling back to the site-wide widget silently books a DIFFERENT experience,
+  // so the admin has to be told rather than left to discover it from a booking.
+  const usesSiteWideBokun = !watch('bokun.channel') && !watch('bokun.experienceId')
+
   async function onSubmit(values: AttractionTourFormValues) {
     setIsSaving(true)
     setSubmitError(null)
@@ -260,7 +277,21 @@ export default function AttractionTourForm({
         }),
       )
 
-      const prepared = { ...values, gallery }
+      const ogImageUrl = values.seo.ogImage.url.startsWith('blob:')
+        ? await (async () => {
+            const file = usePendingImageStore
+              .getState()
+              .getFileByPreviewUrl(values.seo.ogImage.url)
+            if (!file) throw new Error('Social image is missing. Select it again.')
+            return uploadEditorImage(file, values.seo.ogImage.alt)
+          })()
+        : values.seo.ogImage.url
+
+      const prepared = {
+        ...values,
+        gallery,
+        seo: { ...values.seo, ogImage: { ...values.seo.ogImage, url: ogImageUrl } },
+      }
       const saved = await saveAdminAttractionTour(mode, tourId, prepared)
       clearAllPending()
 
@@ -496,6 +527,65 @@ export default function AttractionTourForm({
         </div>
       </SectionCard>
 
+      <SectionCard
+        title="Bokun booking widget"
+        description="Which Bokun experience this tour books."
+      >
+        {usesSiteWideBokun ? (
+          <div
+            role="status"
+            className="mb-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+          >
+            <p className="font-semibold">
+              This tour has no Bokun experience — visitors will book the wrong tour.
+            </p>
+            <p className="mt-1 text-amber-800">
+              With both fields blank the booking form falls back to the site-wide widget from{' '}
+              <Link href="/admin/site-config" className="underline underline-offset-2">
+                Site config
+              </Link>{' '}
+              (experience <span className="font-mono">{SITE_BOKUN_EXPERIENCE_ID}</span>), which is
+              the home page package. Someone booking from this page would reserve that experience
+              instead of this one. Add this tour&apos;s own Experience ID below.
+            </p>
+          </div>
+        ) : null}
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor="bokun_channel" className="mb-1.5 block text-sm font-medium text-heading">
+              Booking channel UUID
+            </label>
+            <input
+              id="bokun_channel"
+              className={inputClass}
+              placeholder={SITE_BOKUN_CHANNEL}
+              {...register('bokun.channel')}
+            />
+            <FieldError message={errors.bokun?.channel?.message} />
+          </div>
+          <div>
+            <label
+              htmlFor="bokun_experience"
+              className="mb-1.5 block text-sm font-medium text-heading"
+            >
+              Experience ID
+            </label>
+            <input
+              id="bokun_experience"
+              className={inputClass}
+              placeholder={SITE_BOKUN_EXPERIENCE_ID}
+              {...register('bokun.experienceId')}
+            />
+            <FieldError message={errors.bokun?.experienceId?.message} />
+          </div>
+        </div>
+        <p className="mt-3 text-xs text-zinc-500">
+          Placeholders show the current site-wide values. Set both fields together — a channel
+          without an experience ID produces a calendar that never loads.
+        </p>
+      </SectionCard>
+
       <SectionCard title="Overview" description="Main description and highlight bullets.">
         <div className="space-y-5">
           <RichTextField
@@ -614,6 +704,83 @@ export default function AttractionTourForm({
               <input id="q_cta_href" className={inputClass} {...register('questionsSection.ctaHref')} />
             </div>
           </div>
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        title="SEO & social"
+        description="Search and share preview for this tour. Every field is optional — blanks fall back to the tour title, overview and feature image."
+      >
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="meta_title" className="mb-1.5 block text-sm font-medium text-heading">
+              Meta title
+            </label>
+            <input
+              id="meta_title"
+              className={inputClass}
+              placeholder={watch('title') || 'Falls back to the tour title'}
+              {...register('seo.metaTitle')}
+            />
+            <FieldError message={errors.seo?.metaTitle?.message} />
+          </div>
+
+          <div>
+            <label
+              htmlFor="meta_description"
+              className="mb-1.5 block text-sm font-medium text-heading"
+            >
+              Meta description
+            </label>
+            <textarea
+              id="meta_description"
+              rows={3}
+              className={inputClass}
+              placeholder="Falls back to the first ~160 characters of the overview"
+              {...register('seo.metaDescription')}
+            />
+            <FieldError message={errors.seo?.metaDescription?.message} />
+          </div>
+
+          <StringListField
+            label="Meta keywords"
+            hint="Used in the page metadata"
+            values={watch('seo.metaKeywords')}
+            onChange={(next) => setValue('seo.metaKeywords', next, { shouldDirty: true })}
+          />
+
+          <Controller
+            control={control}
+            name="seo.ogImage.url"
+            render={({ field }) => (
+              <DeferredImagePicker
+                id="tour_og_image"
+                label="Social share image"
+                hint="Shown when the tour is shared on Facebook, WhatsApp or X. 1200×630 recommended. Falls back to the gallery feature image."
+                previewUrl={field.value || undefined}
+                altText={watch('seo.ogImage.alt')}
+                altError={errors.seo?.ogImage?.alt?.message}
+                error={errors.seo?.ogImage?.url?.message}
+                onAltTextChange={(value) => {
+                  setValue('seo.ogImage.alt', value, { shouldDirty: true })
+                  if (field.value.startsWith('blob:')) {
+                    setPendingAltText(field.value, value)
+                  }
+                }}
+                onSelect={(file) => {
+                  field.onChange(replaceFieldFile(OG_IMAGE_FIELD_KEY, file))
+                  setValue('seo.ogImage.alt', defaultAltFromFileName(file.name), {
+                    shouldDirty: true,
+                  })
+                }}
+                onClear={() => {
+                  removePendingField(OG_IMAGE_FIELD_KEY)
+                  field.onChange('')
+                  setValue('seo.ogImage.alt', '', { shouldDirty: true })
+                }}
+              />
+            )}
+          />
         </div>
       </SectionCard>
 

@@ -20,6 +20,12 @@ export type AdminAttractionTourListItem = {
   /** Feature image, for the list thumbnail. Empty when no gallery is set yet. */
   imageUrl: string
   imageAlt: string
+  /**
+   * False means the tour falls back to the site-wide Bokun widget, so visitors
+   * would book a different experience. Surfaced in the list so the gap is
+   * visible without opening each tour.
+   */
+  hasBokunTarget: boolean
 }
 
 /** JSON columns come back as `unknown`; parse defensively. */
@@ -58,6 +64,13 @@ function mapFormToColumns(values: AttractionTourFormValues) {
       html: sanitizeBlogHtml(section.html),
     })) as unknown as Prisma.InputJsonValue,
     travelerPhotos: values.travelerPhotos as unknown as Prisma.InputJsonValue,
+    metaTitle: values.seo.metaTitle,
+    metaDescription: values.seo.metaDescription,
+    metaKeywords: values.seo.metaKeywords,
+    ogImageUrl: values.seo.ogImage.url,
+    ogImageAlt: values.seo.ogImage.alt,
+    bokunChannel: values.bokun.channel,
+    bokunExperienceId: values.bokun.experienceId,
   }
 }
 
@@ -109,6 +122,16 @@ export function mapTourRecordToForm(tour: TourWithReviews): AttractionTourFormVa
         rating: review.rating,
         text: review.text,
       })),
+    seo: {
+      metaTitle: tour.metaTitle,
+      metaDescription: tour.metaDescription,
+      metaKeywords: tour.metaKeywords,
+      ogImage: { url: tour.ogImageUrl, alt: tour.ogImageAlt },
+    },
+    bokun: {
+      channel: tour.bokunChannel,
+      experienceId: tour.bokunExperienceId,
+    },
   }
 }
 
@@ -149,13 +172,15 @@ export async function listAdminAttractionToursFromDB(params: {
         reviewCount: true,
         updatedAt: true,
         galleryPhotos: true,
+        bokunChannel: true,
+        bokunExperienceId: true,
       },
     }),
     prisma.attractionTour.count({ where }),
   ])
 
   return {
-    items: items.map(({ galleryPhotos, ...item }) => {
+    items: items.map(({ galleryPhotos, bokunChannel, bokunExperienceId, ...item }) => {
       const feature = toBannerPhotos(parseJsonArray<TourGalleryPhotoValues>(galleryPhotos))[0]
 
       return {
@@ -163,6 +188,7 @@ export async function listAdminAttractionToursFromDB(params: {
         updatedAt: item.updatedAt.toISOString(),
         imageUrl: feature?.src ?? '',
         imageAlt: feature?.alt ?? '',
+        hasBokunTarget: Boolean(bokunChannel && bokunExperienceId),
       }
     }) satisfies AdminAttractionTourListItem[],
     page,

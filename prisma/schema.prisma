@@ -153,6 +153,19 @@ model AttractionTour {
   /// [{ url, alt }]
   travelerPhotos Json @default("[]")
 
+  /// SEO + social. Every field falls back to the tour's own content when blank,
+  /// so a tour is never required to fill these in.
+  metaTitle       String   @default("")
+  metaDescription String   @default("") @db.Text
+  metaKeywords    String[] @default([])
+  ogImageUrl      String   @default("")
+  ogImageAlt      String   @default("")
+
+  /// Per-tour Bokun widget. Blank means "use the site-wide channel/experience
+  /// from /admin/site-config", which is what the home page uses.
+  bokunChannel      String @default("")
+  bokunExperienceId String @default("")
+
   reviews AttractionTourReview[]
 
   createdAt DateTime @default(now())

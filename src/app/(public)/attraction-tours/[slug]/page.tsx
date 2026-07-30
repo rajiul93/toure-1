@@ -1,4 +1,5 @@
 import AttractionTourDetailView from '@/components/attraction-tours/attraction-tour-detail-view'
+import AttractionTourStructuredData from '@/components/attraction-tours/attraction-tour-structured-data'
 import { createPageMetadata } from '@/lib/metadata'
 import {
   resolveAttractionTourDetail,
@@ -27,12 +28,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     })
   }
 
+  // `tour.seo` is already resolved: dashboard values where set, otherwise the
+  // tour's own title / overview excerpt / feature image. Note the description
+  // must never be raw `overview.description` — that is Quill HTML and would put
+  // markup in the meta tag.
   return createPageMetadata({
-    title: tour.title,
-    description: tour.overview.description,
+    title: tour.seo.metaTitle,
+    description: tour.seo.metaDescription,
     path: `/attraction-tours/${tour.slug}`,
-    image: tour.gallery.bannerPhotos[0]?.src,
-    imageAlt: tour.gallery.bannerPhotos[0]?.alt,
+    image: tour.seo.ogImage.url || undefined,
+    imageAlt: tour.seo.ogImage.alt || undefined,
+    keywords: tour.seo.metaKeywords.length > 0 ? tour.seo.metaKeywords : undefined,
+    type: 'article',
   })
 }
 
@@ -45,5 +52,10 @@ export default async function AttractionTourDetailPage({ params }: Props) {
 
   if (!tour) notFound()
 
-  return <AttractionTourDetailView tour={tour} itineraryStops={tourConfig.itineraryStops} />
+  return (
+    <>
+      <AttractionTourStructuredData tour={tour} />
+      <AttractionTourDetailView tour={tour} itineraryStops={tourConfig.itineraryStops} />
+    </>
+  )
 }

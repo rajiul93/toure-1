@@ -1,8 +1,8 @@
 'use client';
 
 import { IconCheck, IconChevronUp, IconX } from '@/components/icons';
+import { useBookingTarget } from '@/components/booking-target-context'
 import { useSiteConfig } from '@/components/site-config/site-config-provider'
-import { useTourConfig } from '@/components/tour-config/tour-config-provider';
 import AvailabilityControl from './availability-control';
 import {
   startBokunCalendarWatch,
@@ -13,6 +13,7 @@ import {
   BOOKING_OPEN_EVENT,
   openBookingCalendar,
 } from '@/lib/open-booking';
+import Link from 'next/link';
 import Script from 'next/script';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { BsWhatsapp } from 'react-icons/bs';
@@ -26,7 +27,7 @@ export default function BookingForm({
   onExpandedChange?: (expanded: boolean) => void;
 }) {
   const site = useSiteConfig();
-  const { louvreTour } = useTourConfig();
+  const bokun = useBookingTarget();
 
   const trustBadges = [
     {
@@ -89,7 +90,10 @@ export default function BookingForm({
     });
 
     return () => handle.stop();
-  }, [loaderReady]);
+    // `bokun.calendarUrl` is a dependency because the keyed widget above is a
+    // brand-new element whenever it changes: the old watcher points at a
+    // detached node, and the new one needs its own `requestScan()`.
+  }, [loaderReady, bokun.calendarUrl]);
 
   /**
    * A full reload, deliberately. Re-mounting the widget node and re-running
@@ -158,7 +162,7 @@ export default function BookingForm({
     <>
     <div className="flex flex-col rounded-xl bg-white p-3 shadow ring-1 ring-black/5 sm:p-4">
       <Script
-        src={site.bokun.loaderUrl}
+        src={bokun.loaderUrl}
         strategy="lazyOnload"
         onReady={() => setLoaderReady(true)}
         onError={() => {
@@ -184,10 +188,26 @@ export default function BookingForm({
             })}
           </div>
 
+          {/* Off the home page the price has no context — the visitor could be
+              reading a blog post or a review and see a bare "€57 / person". */}
+          {bokun.showTitle ? (
+            <div className="mb-3 flex items-start justify-between gap-2">
+              <p className="text-sm font-bold leading-snug text-heading">{bokun.title}</p>
+              {bokun.showDetailsLink ? (
+                <Link
+                  href={bokun.detailsHref}
+                  className="shrink-0 whitespace-nowrap text-xs font-semibold text-primary underline underline-offset-2 transition hover:text-primary-hover"
+                >
+                  View details
+                </Link>
+              ) : null}
+            </div>
+          ) : null}
+
           <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
             <p className="leading-none">
               <span className="text-3xl font-bold tracking-tight text-zinc-900">
-                {louvreTour.priceLabel}
+                {bokun.priceLabel}
               </span>
               <span className="ml-1 text-sm text-zinc-500">/ person</span>
             </p>
@@ -243,10 +263,17 @@ export default function BookingForm({
           aria-hidden={!expanded}
           inert={!expanded}
         >
+          {/* Keyed on the calendar URL. Bókun hydrates this node into an
+              iframe and will not re-hydrate an element it has already
+              processed, so without a remount a client-side navigation between
+              two tours would leave the previous tour's calendar in place while
+              `data-src` silently pointed at the new one — a visitor could book
+              the wrong experience. The key forces a fresh, unhydrated node. */}
           <div
+            key={bokun.calendarUrl}
             ref={widgetRef}
             className="bokunWidget min-h-[320px]"
-            data-src={site.bokun.calendarUrl}
+            data-src={bokun.calendarUrl}
           />
         </div>
       </div>

@@ -4,7 +4,7 @@ import { resolvePublishedAttractionTourCards } from '@/lib/attraction-tour-publi
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import { FaStar } from 'react-icons/fa6';
+import { FaArrowRight, FaStar } from 'react-icons/fa6';
 
 export async function generateMetadata(): Promise<Metadata> {
   return createSeoPageMetadata('attractionTours');
@@ -43,51 +43,74 @@ export default async function AttractionToursPage() {
         </p>
       ) : null}
 
-      <ul className="mt-8 grid gap-5 sm:grid-cols-2">
+      <ul className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {tours.map((tour) => (
           <li key={tour.slug}>
-            <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition hover:border-zinc-300 hover:shadow-md">
-              <div className="relative aspect-[16/10] overflow-hidden">
+            {/*
+              The whole card is the link. Rather than wrapping everything in an
+              anchor (which swallows the heading and makes the screen-reader
+              label a wall of text), a single link on the title stretches over
+              the card with `after:absolute after:inset-0`. One focusable link
+              per card, text stays selectable, and the "View tour" row below is
+              purely decorative.
+            */}
+            <article className="group relative flex h-full flex-col overflow-hidden rounded-3xl bg-white ring-1 ring-zinc-200/80 transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-zinc-900/10 hover:ring-zinc-300 focus-within:ring-2 focus-within:ring-primary motion-reduce:transition-none motion-reduce:hover:translate-y-0">
+              <div className="relative aspect-4/3 overflow-hidden">
                 <Image
                   src={tour.image}
                   alt={tour.title}
                   fill
-                  className="object-cover transition duration-500 group-hover:scale-105"
-                  sizes="(max-width: 640px) 100vw, 50vw"
+                  className="object-cover transition duration-500 group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 />
+                {/* Scrim keeps the rating chip legible on a bright photo. */}
+                <div
+                  className="absolute inset-x-0 top-0 h-20 bg-linear-to-b from-black/25 to-transparent"
+                  aria-hidden="true"
+                />
+                <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-xs font-bold text-heading shadow-sm backdrop-blur-sm">
+                  <FaStar className="size-3 text-primary" aria-hidden="true" />
+                  {tour.rating}
+                </span>
               </div>
-              <div className="flex flex-1 flex-col p-5 sm:p-6">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-lg font-bold text-heading">
-                    {tour.priceLabel}
-                  </span>
-                  <span className="inline-flex items-center gap-1 text-sm text-zinc-600">
-                    <FaStar
-                      className="size-3.5 text-primary"
-                      aria-hidden="true"
-                    />
-                    {tour.rating}
-                  </span>
-                </div>
-                <h2 className="mt-2 text-base font-bold leading-snug text-heading sm:text-lg">
-                  <Link href={tour.href} className="hover:text-primary">
-                    {tour.title}
+
+              <div className="flex flex-1 flex-col p-5">
+                <h2 className="text-base font-bold leading-snug text-heading">
+                  <Link
+                    href={tour.href}
+                    className="transition-colors after:absolute after:inset-0 after:content-[''] group-hover:text-primary focus-visible:outline-none"
+                  >
+                    <span className="line-clamp-2">{tour.title}</span>
                   </Link>
                 </h2>
-                <p className="mt-2 flex-1 text-sm leading-relaxed text-zinc-600">
+
+                <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-zinc-600">
                   {tour.excerpt}
                 </p>
+
                 {tour.durationLabel ? (
-                  <p className="mt-3 text-xs text-zinc-500">
-                    {tour.durationLabel}
-                  </p>
+                  <p className="mt-3 text-xs text-zinc-500">{tour.durationLabel}</p>
                 ) : null}
-                <Link
-                  href={tour.href}
-                  className="mt-4 inline-flex w-fit rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary-hover"
-                >
-                  View tour
-                </Link>
+
+                {/* `mt-auto` pins the footer down so cards of differing text
+                    length still line their prices up across the row. */}
+                <div className="mt-auto flex items-end justify-between gap-3 pt-5">
+                  <p className="leading-none">
+                    <span className="block text-[11px] font-medium uppercase tracking-wide text-zinc-400">
+                      From
+                    </span>
+                    <span className="mt-1 block text-xl font-bold text-heading">
+                      {tour.priceLabel}
+                    </span>
+                  </p>
+                  <span
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary"
+                    aria-hidden="true"
+                  >
+                    View tour
+                    <FaArrowRight className="size-3 transition-transform duration-300 group-hover:translate-x-1 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0" />
+                  </span>
+                </div>
               </div>
             </article>
           </li>

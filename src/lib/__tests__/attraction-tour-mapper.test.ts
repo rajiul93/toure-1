@@ -1,5 +1,6 @@
 import { MIN_GALLERY_PHOTOS } from '@/lib/attraction-tour-detail'
 import {
+  buildAttractionTourSeo,
   htmlToExcerpt,
   mapTourRecordToCard,
   mapTourRecordToDetail,
@@ -47,6 +48,13 @@ function tourRecord(overrides: Partial<AttractionTourWithReviews> = {}) {
     importantInfo: [{ id: 'inclusion', title: 'Inclusion', html: '<ul><li>Ticket</li></ul>' }],
     travelerPhotos: [],
     reviews: [],
+    metaTitle: '',
+    metaDescription: '',
+    metaKeywords: [],
+    ogImageUrl: '',
+    ogImageAlt: '',
+    bokunChannel: '',
+    bokunExperienceId: '',
     createdAt: new Date('2026-07-01T00:00:00Z'),
     updatedAt: new Date('2026-07-02T00:00:00Z'),
     ...overrides,
@@ -248,5 +256,118 @@ describe('mapTourRecordToCard', () => {
 
   it('returns an empty image rather than crashing when the gallery is empty', () => {
     expect(mapTourRecordToCard(tourRecord({ galleryPhotos: [] })).imageUrl).toBe('')
+  })
+})
+
+describe('buildAttractionTourSeo', () => {
+  const feature = { src: '/feature.webp', alt: 'Feature alt', label: 'F', featured: true }
+
+  it('uses the dashboard values when they are set', () => {
+    const seo = buildAttractionTourSeo(
+      {
+        title: 'Orsay Museum',
+        metaTitle: 'Orsay Museum Tickets | Skip the Line',
+        metaDescription: 'Book timed entry to the Orsay.',
+        metaKeywords: ['orsay', 'paris'],
+        ogImageUrl: '/social.webp',
+        ogImageAlt: 'Social alt',
+        overviewDescription: '<p>Ignored when metaDescription is set.</p>',
+      },
+      feature,
+    )
+
+    expect(seo).toEqual({
+      metaTitle: 'Orsay Museum Tickets | Skip the Line',
+      metaDescription: 'Book timed entry to the Orsay.',
+      metaKeywords: ['orsay', 'paris'],
+      ogImage: { url: '/social.webp', alt: 'Social alt' },
+    })
+  })
+
+  it('falls back to the tour title and a plain-text overview excerpt', () => {
+    const seo = buildAttractionTourSeo(
+      {
+        title: 'Orsay Museum',
+        metaTitle: '   ',
+        metaDescription: '',
+        metaKeywords: [],
+        ogImageUrl: '',
+        ogImageAlt: '',
+        overviewDescription: '<p>Impressionist <strong>masterpieces</strong> by the Seine.</p>',
+      },
+      feature,
+    )
+
+    expect(seo.metaTitle).toBe('Orsay Museum')
+    // Must be plain text — raw HTML in a meta description would ship tags.
+    expect(seo.metaDescription).toBe('Impressionist masterpieces by the Seine.')
+    expect(seo.metaDescription).not.toContain('<')
+  })
+
+  it('falls back to the gallery feature image for social sharing', () => {
+    const seo = buildAttractionTourSeo(
+      {
+        title: 'Orsay Museum',
+        metaTitle: '',
+        metaDescription: '',
+        metaKeywords: [],
+        ogImageUrl: '',
+        ogImageAlt: '',
+        overviewDescription: '<p>x</p>',
+      },
+      feature,
+    )
+
+    expect(seo.ogImage).toEqual({ url: '/feature.webp', alt: 'Feature alt' })
+  })
+
+  it('falls back to the title for alt text when the tour has no photos at all', () => {
+    const seo = buildAttractionTourSeo({
+      title: 'Orsay Museum',
+      metaTitle: '',
+      metaDescription: '',
+      metaKeywords: [],
+      ogImageUrl: '',
+      ogImageAlt: '',
+      overviewDescription: '<p>x</p>',
+    })
+
+    expect(seo.ogImage).toEqual({ url: '', alt: 'Orsay Museum' })
+  })
+
+  it('drops blank keywords', () => {
+    const seo = buildAttractionTourSeo({
+      title: 'T',
+      metaTitle: '',
+      metaDescription: '',
+      metaKeywords: ['paris', '  ', ''],
+      ogImageUrl: '',
+      ogImageAlt: '',
+      overviewDescription: '<p>x</p>',
+    })
+
+    expect(seo.metaKeywords).toEqual(['paris'])
+  })
+})
+
+describe('mapTourRecordToDetail — seo and bokun', () => {
+  it('exposes a resolved seo block and the raw bokun target', () => {
+    const detail = mapTourRecordToDetail(
+      tourRecord({
+        metaTitle: 'Custom title',
+        bokunChannel: 'chan-1',
+        bokunExperienceId: '999',
+      } as unknown as Partial<AttractionTourWithReviews>),
+    )
+
+    expect(detail.seo.metaTitle).toBe('Custom title')
+    expect(detail.bokun).toEqual({ channel: 'chan-1', experienceId: '999' })
+  })
+
+  it('leaves bokun blank when the tour has no override', () => {
+    expect(mapTourRecordToDetail(tourRecord()).bokun).toEqual({
+      channel: '',
+      experienceId: '',
+    })
   })
 })

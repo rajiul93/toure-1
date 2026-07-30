@@ -118,6 +118,30 @@ export function mapTourRecordToCard(tour: {
 }
 
 /** DB row → the exact payload `AttractionTourDetailView` already renders. */
+/**
+ * SEO fields are optional in the dashboard, so fill each blank from the tour's
+ * own content. Doing it here means `generateMetadata` and any structured data
+ * read one already-resolved shape instead of repeating the fallback chain.
+ */
+export function buildAttractionTourSeo(
+  tour: Pick<
+    AttractionTourWithReviews,
+    'title' | 'metaTitle' | 'metaDescription' | 'metaKeywords' | 'ogImageUrl' | 'ogImageAlt' | 'overviewDescription'
+  >,
+  featurePhoto?: BannerPhoto,
+): AttractionTourDetail['seo'] {
+  return {
+    metaTitle: tour.metaTitle.trim() || tour.title,
+    metaDescription:
+      tour.metaDescription.trim() || htmlToExcerpt(tour.overviewDescription, 160),
+    metaKeywords: tour.metaKeywords.filter((keyword) => keyword.trim() !== ''),
+    ogImage: {
+      url: tour.ogImageUrl.trim() || featurePhoto?.src || '',
+      alt: tour.ogImageAlt.trim() || featurePhoto?.alt || tour.title,
+    },
+  }
+}
+
 export function mapTourRecordToDetail(tour: AttractionTourWithReviews): AttractionTourDetail {
   const configured = toBannerPhotos(parseJsonArray<TourGalleryPhotoValues>(tour.galleryPhotos))
   const galleryPhotos = buildGalleryPhotos(configured)
@@ -137,6 +161,8 @@ export function mapTourRecordToDetail(tour: AttractionTourWithReviews): Attracti
     ],
     title: tour.title,
     rating: { average: tour.ratingAverage, reviewCount: tour.reviewCount },
+    seo: buildAttractionTourSeo(tour, bannerPhotos[0]),
+    bokun: { channel: tour.bokunChannel, experienceId: tour.bokunExperienceId },
     gallery: { bannerPhotos, galleryPhotos },
     bookingPanel: {
       priceFrom: tour.priceFrom,

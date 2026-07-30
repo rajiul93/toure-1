@@ -4,13 +4,59 @@ function digitsOnly(value: string): string {
   return value.replace(/\D/g, '')
 }
 
+/**
+ * Obviously-invalid placeholders. A real channel UUID must NEVER be committed
+ * here: these values are what the site falls back to when the environment is
+ * incomplete, so a real one would mean a misconfigured deploy silently takes
+ * bookings — and money — into whichever Bókun account was hardcoded. That is
+ * the single most dangerous thing to get wrong when this codebase changes
+ * hands. Placeholders make the widget visibly fail instead.
+ */
+const DEV_BOKUN_CHANNEL = 'missing-bokun-channel'
+const DEV_BOKUN_EXPERIENCE_ID = '0'
+
+/**
+ * Pure (takes its inputs) so it can be unit-tested without touching
+ * `process.env`. Mirrors `resolveSiteUrl` in `site-config.ts`: hard-fail in
+ * production, harmless placeholder in development.
+ */
+export function resolveBokunCredentials(
+  rawChannel: string | undefined,
+  rawExperienceId: string | undefined,
+  nodeEnv: string | undefined,
+): { channel: string; experienceId: string } {
+  const channel = rawChannel?.trim()
+  const experienceId = rawExperienceId?.trim()
+
+  if (!channel || !experienceId) {
+    if (nodeEnv === 'production') {
+      throw new Error(
+        '[site-config] NEXT_PUBLIC_BOKUN_CHANNEL and NEXT_PUBLIC_BOKUN_EXPERIENCE_ID are ' +
+          'required in production. Without them the booking widget has no account to ' +
+          'send reservations to. Set both in the deployment environment.',
+      )
+    }
+
+    return {
+      channel: channel || DEV_BOKUN_CHANNEL,
+      experienceId: experienceId || DEV_BOKUN_EXPERIENCE_ID,
+    }
+  }
+
+  return { channel, experienceId }
+}
+
 export function getDefaultSiteSettingsInput(): SiteSettingsInput {
   const whatsappNumber = digitsOnly(
     process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '8800000000000',
   )
-  const bokunChannel =
-    process.env.NEXT_PUBLIC_BOKUN_CHANNEL ?? 'c8f2314b-0289-4a75-825c-37cb690a7c70'
-  const bokunExperienceId = process.env.NEXT_PUBLIC_BOKUN_EXPERIENCE_ID ?? '636529'
+  // Read as literals so Next can inline them into client bundles.
+  const { channel: bokunChannel, experienceId: bokunExperienceId } =
+    resolveBokunCredentials(
+      process.env.NEXT_PUBLIC_BOKUN_CHANNEL,
+      process.env.NEXT_PUBLIC_BOKUN_EXPERIENCE_ID,
+      process.env.NODE_ENV,
+    )
 
   return {
     brand: {

@@ -11,7 +11,7 @@ import { formatRelativeTime } from '@/lib/dayjs'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
-import { FaPen, FaPlus, FaStar, FaTrash } from 'react-icons/fa6'
+import { FaPen, FaPlus, FaStar, FaTrash, FaTriangleExclamation } from 'react-icons/fa6'
 
 function PublishToggle({
   tour,
@@ -225,6 +225,16 @@ export default function AdminAttractionToursClient() {
                         <span className="mt-0.5 block truncate text-xs text-zinc-500">
                           /attraction-tours/{tour.slug}
                         </span>
+                        {!tour.hasBokunTarget ? (
+                          <Link
+                            href={`/admin/attraction-tours/${tour.id}`}
+                            className="mt-1.5 inline-flex items-center gap-1.5 rounded-md bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-900 ring-1 ring-amber-300 transition hover:bg-amber-100"
+                            title="This tour falls back to the site-wide widget, so visitors would book the home page package instead"
+                          >
+                            <FaTriangleExclamation className="size-3" aria-hidden="true" />
+                            No Bokun experience — books the wrong tour
+                          </Link>
+                        ) : null}
                       </td>
 
                       <td className="px-4 py-4 whitespace-nowrap font-semibold text-heading">

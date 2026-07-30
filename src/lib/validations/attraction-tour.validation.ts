@@ -133,6 +133,44 @@ export const attractionTourFormSchema = z.object({
   travelerPhotos: z.array(tourTravelerPhotoSchema),
 
   reviews: z.array(tourReviewSchema),
+
+  /**
+   * Every field is optional. Blank values fall back to the tour's own content
+   * at render time (see `buildAttractionTourSeo`), so a tour is never blocked
+   * from publishing because SEO wasn't filled in.
+   */
+  seo: z.object({
+    metaTitle: z.string().trim().max(70, 'Keep the title under 70 characters'),
+    metaDescription: z
+      .string()
+      .trim()
+      .max(200, 'Keep the description under 200 characters'),
+    metaKeywords: z.array(z.string().trim().min(1)),
+    ogImage: z.object({
+      url: imageUrlSchema,
+      alt: z.string().trim(),
+    }),
+  }),
+
+  /**
+   * Blank means "use the site-wide Bokun channel from /admin/site-config" —
+   * the same widget the home page renders. Both fields must be set together,
+   * because a channel without an experience id builds a dead calendar URL.
+   */
+  bokun: z
+    .object({
+      channel: z.string().trim(),
+      experienceId: z.string().trim(),
+    })
+    .superRefine((value, ctx) => {
+      if (Boolean(value.channel) !== Boolean(value.experienceId)) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'Set both the channel and the experience ID, or leave both blank',
+          path: [value.channel ? 'experienceId' : 'channel'],
+        })
+      }
+    }),
 })
 
 export type AttractionTourFormValues = z.infer<typeof attractionTourFormSchema>
@@ -206,5 +244,12 @@ export function createEmptyAttractionTourValues(): AttractionTourFormValues {
     },
     travelerPhotos: [],
     reviews: [],
+    seo: {
+      metaTitle: '',
+      metaDescription: '',
+      metaKeywords: [],
+      ogImage: { url: '', alt: '' },
+    },
+    bokun: { channel: '', experienceId: '' },
   }
 }

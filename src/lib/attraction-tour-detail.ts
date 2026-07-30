@@ -62,6 +62,18 @@ export type AttractionTourDetail = {
     description: string
     highlightsHtml: string
   }
+  /** Already resolved — blanks replaced by the tour's own content. */
+  seo: {
+    metaTitle: string
+    metaDescription: string
+    metaKeywords: string[]
+    ogImage: { url: string; alt: string }
+  }
+  /** Blank means the site-wide Bokun widget (same one the home page uses). */
+  bokun: {
+    channel: string
+    experienceId: string
+  }
   importantInformation: AttractionTourInfoSection[]
   /** Quill-authored HTML, already sanitized. */
   meetingPointAddress: string

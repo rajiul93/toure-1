@@ -16,10 +16,17 @@ async function loadSiteConfigFromDB() {
   return resolveSiteConfig(input)
 }
 
+/**
+ * A tag-only cache that captures an empty/wrong value (fresh DB with no row
+ * yet, or a shape change after a deploy) never self-heals without a time
+ * bound. Versioning the key ensures a deploy always gets a fresh read on
+ * boot; the tag lets admin saves invalidate it immediately. The time window
+ * is a safety net, not the refresh mechanism.
+ */
 export const getSiteConfigFromDB = unstable_cache(
   loadSiteConfigFromDB,
-  ['site-config'],
-  { tags: ['site-config'] },
+  ['site-config-v1'],
+  { tags: ['site-config'], revalidate: 300 },
 )
 
 export async function getSiteSettingsFormFromDB(): Promise<SiteSettingsFormValues> {
