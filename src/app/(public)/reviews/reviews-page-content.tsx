@@ -5,33 +5,13 @@ import ReviewStars from '@/components/review-stars'
 import PageHero from '@/components/page-hero'
 import { IconStar } from '@/components/icons'
 import { useTourConfig } from '@/components/tour-config/tour-config-provider'
-import { FILTER_TAGS, RATING_BREAKDOWN, REVIEWS } from '@/lib/reviews-data'
+import { FILTER_TAGS, REVIEWS } from '@/lib/reviews-data'
 
 export default function ReviewsPageContent() {
   const { louvreTour } = useTourConfig()
 
   return (
     <div>
-      <aside className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm mb-8">
-        <h2 className="text-sm font-semibold text-heading">Rating breakdown</h2>
-        <ul className="mt-4 space-y-2.5">
-          {RATING_BREAKDOWN.map((row) => (
-            <li key={row.stars} className="flex items-center gap-3 text-sm">
-              <span className="w-8 shrink-0 tabular-nums text-zinc-600">{row.stars}★</span>
-              <div className="h-2 flex-1 overflow-hidden rounded-full bg-zinc-100">
-                <div
-                  className="h-full rounded-full bg-primary transition-all"
-                  style={{ width: `${row.percent}%` }}
-                />
-              </div>
-              <span className="w-8 shrink-0 text-right tabular-nums text-zinc-500">
-                {row.percent}%
-              </span>
-            </li>
-          ))}
-        </ul>
-      </aside>
-
       <PageHero
         eyebrow="Traveler reviews"
         title="What visitors say about the Louvre experience"
