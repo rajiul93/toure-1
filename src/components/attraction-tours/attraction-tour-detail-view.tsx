@@ -5,6 +5,7 @@ import TourExperienceRail from '@/components/attraction-tours/tour-experience-ra
 import TourImportantInformationSection from '@/components/attraction-tours/tour-important-information-section'
 import TourDetailMeetingSection from '@/components/attraction-tours/tour-detail-meeting-section'
 import TourReviewsSlider from '@/components/attraction-tours/tour-reviews-slider'
+import TravelerPhotosGallery from '@/components/attraction-tours/traveler-photos-gallery'
 import { IconCheck } from '@/components/icons'
 import type { AttractionTourDetail } from '@/lib/attraction-tour-detail'
 import type { ResolvedTourConfig } from '@/lib/tour-config.types'
@@ -165,17 +166,7 @@ export default function AttractionTourDetailView({
 
       <section className="mt-8 border-t border-zinc-200 py-8" aria-labelledby="traveler-photos-heading">
         <SectionTitle id="traveler-photos-heading">Traveler photos</SectionTitle>
-        <div className="scrollbar-none mt-5 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1 [-webkit-overflow-scrolling:touch]">
-          {tour.travelerPhotos.map((photo) => (
-            <div
-              key={photo.url}
-              className="relative aspect-square w-28 shrink-0 snap-start overflow-hidden rounded-xl bg-zinc-100 sm:w-32"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={photo.url} alt={photo.alt} className="h-full w-full object-cover" />
-            </div>
-          ))}
-        </div>
+        <TravelerPhotosGallery photos={tour.travelerPhotos} />
       </section>
 
       <TourReviewsSlider rating={tour.rating} reviews={tour.reviews} />
