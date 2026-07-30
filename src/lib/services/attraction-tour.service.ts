@@ -1,5 +1,4 @@
 import { toBannerPhotos } from '@/lib/attraction-tour-mapper'
-import { sanitizeBlogHtml } from '@/lib/blog-article-html'
 import { prisma } from '@/lib/db'
 import type {
   AttractionTourFormValues,
@@ -38,8 +37,16 @@ function parseJsonArray<T>(value: Prisma.JsonValue | null): T[] {
  * `dangerouslySetInnerHTML` on a public page, so this is the boundary that
  * prevents stored XSS. It lives in the service rather than the route handlers
  * so create and update can never diverge.
+ *
+ * DOMPurify is imported lazily rather than at module scope: `isomorphic-dompurify`
+ * pulls in jsdom, whose `html-encoding-sniffer` dependency `require()`s an
+ * ESM-only module, which throws ERR_REQUIRE_ESM in the serverless bundle. Only
+ * create/update need sanitising, so the read-only list/get routes that share
+ * this module must not drag that chain in.
  */
-function mapFormToColumns(values: AttractionTourFormValues) {
+async function mapFormToColumns(values: AttractionTourFormValues) {
+  const { sanitizeBlogHtml } = await import('@/lib/blog-article-html')
+
   return {
     slug: values.slug,
     title: values.title,
@@ -217,9 +224,11 @@ export async function createAttractionTourInDB(values: AttractionTourFormValues)
     throw new Error(`A tour with the slug "${values.slug}" already exists`)
   }
 
+  const columns = await mapFormToColumns(values)
+
   const tour = await prisma.attractionTour.create({
     data: {
-      ...mapFormToColumns(values),
+      ...columns,
       reviews: { create: mapReviewsToCreate(values) },
     },
     include: { reviews: true },
@@ -241,6 +250,8 @@ export async function updateAttractionTourInDB(
     throw new Error(`A tour with the slug "${values.slug}" already exists`)
   }
 
+  const columns = await mapFormToColumns(values)
+
   const tour = await prisma.$transaction(async (tx) => {
     // Reviews are fully replaced: they are ordered and edited as one list, so
     // diffing individual rows would add complexity without benefit.
@@ -249,7 +260,7 @@ export async function updateAttractionTourInDB(
     return tx.attractionTour.update({
       where: { id },
       data: {
-        ...mapFormToColumns(values),
+        ...columns,
         reviews: { create: mapReviewsToCreate(values) },
       },
       include: { reviews: true },

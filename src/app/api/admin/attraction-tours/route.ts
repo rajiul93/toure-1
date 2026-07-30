@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(await listAdminAttractionToursFromDB(parsed.data))
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to list tours'
+    console.error('[GET /api/admin/attraction-tours]', error)
     return jsonError(message, 500)
   }
 }
