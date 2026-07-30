@@ -1,14 +1,20 @@
-'use client'
-
 import ReviewDate from '@/components/review-date'
 import ReviewStars from '@/components/review-stars'
 import PageHero from '@/components/page-hero'
 import { IconStar } from '@/components/icons'
-import { useTourConfig } from '@/components/tour-config/tour-config-provider'
-import { FILTER_TAGS, REVIEWS } from '@/lib/reviews-data'
+import { getTourConfigFromDB } from '@/lib/services/tour-settings.service'
+import { resolveAttractionTourDetail } from '@/lib/attraction-tour-public'
 
-export default function ReviewsPageContent() {
-  const { louvreTour } = useTourConfig()
+const LOUVRE_SLUG = 'louvre-museum'
+
+export default async function ReviewsPageContent() {
+  const [tourConfig, tour] = await Promise.all([
+    getTourConfigFromDB(),
+    resolveAttractionTourDetail(LOUVRE_SLUG),
+  ])
+
+  const { louvreTour } = tourConfig
+  const reviews = tour?.reviews.list ?? []
 
   return (
     <div>
@@ -32,37 +38,20 @@ export default function ReviewsPageContent() {
 
       <div className="mt-8">
         <ul className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          {REVIEWS.map((review) => (
-              <li key={review.id}>
-                <article className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
-                  <div className="flex items-center justify-between gap-2">
-                    <ReviewStars rating={review.rating} />
-                    <ReviewDate value={review.date} className="text-xs text-zinc-400" />
-                  </div>
+          {reviews.map((review, index) => (
+            <li key={`${review.reviewer}-${index}`}>
+              <article className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
+                <div className="flex items-center justify-between gap-2">
+                  <ReviewStars rating={review.rating} />
+                  <ReviewDate value={review.date} className="text-xs text-zinc-400" />
+                </div>
 
-                  <p className="mt-3 text-sm font-semibold text-heading">{review.author}</p>
-                  <p className="mt-2 flex-1 text-sm leading-relaxed text-zinc-700">{review.text}</p>
-
-                  <div className="mt-4 flex flex-wrap gap-1.5">
-                    {review.tags
-                      .filter((tag) => tag !== 'all')
-                      .map((tag) => {
-                        const label = FILTER_TAGS.find((item) => item.id === tag)?.label
-                        if (!label) return null
-                        return (
-                          <span
-                            key={tag}
-                            className="rounded-full bg-success-soft px-2 py-0.5 text-xs font-medium text-success-dark"
-                          >
-                            {label}
-                          </span>
-                        )
-                      })}
-                  </div>
-                </article>
-              </li>
-            ))}
-          </ul>
+                <p className="mt-3 text-sm font-semibold text-heading">{review.reviewer}</p>
+                <p className="mt-2 flex-1 text-sm leading-relaxed text-zinc-700">{review.text}</p>
+              </article>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   )
