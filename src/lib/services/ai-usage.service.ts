@@ -67,18 +67,22 @@ export type AiUsageByModel = AiUsageTotals & {
   model: string
 }
 
+export const AI_USAGE_PAGE_SIZE = 25
+
 /**
  * Everything the usage page needs, in one round trip group:
  * headline totals for three windows, a per-model breakdown for the last 30
- * days, and the most recent individual requests.
+ * days, and one page of individual requests.
  */
-export async function getAiUsageOverviewFromDB() {
+export async function getAiUsageOverviewFromDB({ page = 1 }: { page?: number } = {}) {
   const now = Date.now()
   const startOfToday = new Date(new Date().setHours(0, 0, 0, 0))
   const last7 = new Date(now - 7 * 24 * 60 * 60 * 1000)
   const last30 = new Date(now - 30 * 24 * 60 * 60 * 1000)
 
-  const [today, week, month, grouped, recent] = await Promise.all([
+  const safePage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1
+
+  const [today, week, month, grouped, recent, recentTotal] = await Promise.all([
     sumUsageSince(startOfToday).catch(() => EMPTY_TOTALS),
     sumUsageSince(last7).catch(() => EMPTY_TOTALS),
     sumUsageSince(last30).catch(() => EMPTY_TOTALS),
@@ -90,9 +94,13 @@ export async function getAiUsageOverviewFromDB() {
       orderBy: { _sum: { totalTokens: 'desc' } },
     }),
     prisma.aiUsageLog.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 50,
+      // id breaks ties so rows logged in the same millisecond keep a stable
+      // order across pages instead of repeating or vanishing between them.
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      skip: (safePage - 1) * AI_USAGE_PAGE_SIZE,
+      take: AI_USAGE_PAGE_SIZE,
     }),
+    prisma.aiUsageLog.count(),
   ])
 
   const byModel: AiUsageByModel[] = grouped.map((g) => ({
@@ -104,5 +112,14 @@ export async function getAiUsageOverviewFromDB() {
     totalTokens: g._sum.totalTokens ?? 0,
   }))
 
-  return { today, week, month, byModel, recent }
+  return {
+    today,
+    week,
+    month,
+    byModel,
+    recent,
+    recentTotal,
+    page: safePage,
+    totalPages: Math.max(1, Math.ceil(recentTotal / AI_USAGE_PAGE_SIZE)),
+  }
 }

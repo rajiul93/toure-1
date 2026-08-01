@@ -1,6 +1,7 @@
 import { getAiSettingsFromDB } from '@/lib/services/ai-settings.service'
 import { getAiUsageOverviewFromDB } from '@/lib/services/ai-usage.service'
 import { parsePricePer1M } from '@/lib/ai-settings.types'
+import Link from 'next/link'
 
 export const metadata = {
   title: 'AI Usage',
@@ -15,10 +16,19 @@ function formatUsd(value: number) {
   return value > 0 && value < 0.01 ? '<$0.01' : `$${value.toFixed(2)}`
 }
 
-export default async function AdminAiUsagePage() {
+export default async function AdminAiUsagePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>
+}) {
+  const { page: pageParam } = await searchParams
+  const requestedPage = Number(pageParam)
+
   const [settings, overview] = await Promise.all([
     getAiSettingsFromDB(),
-    getAiUsageOverviewFromDB(),
+    getAiUsageOverviewFromDB({
+      page: Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1,
+    }),
   ])
 
   const prices = {
@@ -150,7 +160,17 @@ export default async function AdminAiUsagePage() {
       <div className="rounded-lg border border-zinc-200 bg-white p-6">
         <h2 className="text-xl font-semibold text-heading">Recent requests</h2>
         {overview.recent.length === 0 ? (
-          <p className="mt-4 text-sm text-zinc-500">Nothing recorded yet.</p>
+          // An out-of-range ?page= must not read as "nothing was ever recorded".
+          overview.recentTotal > 0 ? (
+            <p className="mt-4 text-sm text-zinc-500">
+              No requests on this page.{' '}
+              <Link href="/admin/ai-usage" className="text-primary hover:underline">
+                Back to the first page
+              </Link>
+            </p>
+          ) : (
+            <p className="mt-4 text-sm text-zinc-500">Nothing recorded yet.</p>
+          )
         ) : (
           <div className="mt-4 overflow-x-auto">
             <table className="w-full text-left text-sm">
@@ -193,7 +213,60 @@ export default async function AdminAiUsagePage() {
             </table>
           </div>
         )}
+
+        {overview.totalPages > 1 && (
+          <div className="mt-4 flex flex-col gap-3 border-t border-zinc-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-zinc-500">
+              Page {overview.page} of {overview.totalPages} ·{' '}
+              {nf.format(overview.recentTotal)} total
+            </p>
+            <div className="flex items-center gap-2">
+              <PageLink
+                page={overview.page - 1}
+                disabled={overview.page <= 1}
+                label="Previous"
+              />
+              <PageLink
+                page={overview.page + 1}
+                disabled={overview.page >= overview.totalPages}
+                label="Next"
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
+  )
+}
+
+const PAGE_BUTTON_CLASS =
+  'rounded-lg border border-zinc-200 px-3 py-2 text-sm font-semibold text-heading transition hover:bg-zinc-50'
+
+function PageLink({
+  page,
+  disabled,
+  label,
+}: {
+  page: number
+  disabled: boolean
+  label: string
+}) {
+  // Render the dead end as a <span>: a disabled-looking <a> is still
+  // focusable and clickable, which would let a keyboard user page past the end.
+  if (disabled) {
+    return (
+      <span
+        aria-disabled="true"
+        className={`${PAGE_BUTTON_CLASS} cursor-not-allowed opacity-50`}
+      >
+        {label}
+      </span>
+    )
+  }
+
+  return (
+    <Link href={`/admin/ai-usage?page=${page}`} className={PAGE_BUTTON_CLASS}>
+      {label}
+    </Link>
   )
 }
