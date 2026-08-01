@@ -189,3 +189,70 @@ model AttractionTourReview {
 
   @@index([tourId])
 }
+
+enum KnowledgeBaseCategory {
+  GENERAL
+  HOURS
+  TICKETS
+  BOOKING
+  TRAVEL
+  VISITOR_INFO
+  RULES
+  FAQ
+  OTHER
+}
+
+model KnowledgeBaseEntry {
+  id          String                @id @default(cuid())
+  tourSlug    String?
+  category    KnowledgeBaseCategory @default(GENERAL)
+  question    String
+  answer      String                @db.Text
+  isPublished Boolean               @default(true)
+  isDeleted   Boolean               @default(false)
+  sortOrder   Int                   @default(0)
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+
+  @@index([isPublished])
+  @@index([isDeleted])
+  @@index([tourSlug])
+  @@index([category])
+  @@index([createdAt])
+}
+
+model UnansweredQuestion {
+  id              String   @id @default(cuid())
+  question        String   @db.Text
+  tourSlug        String?
+  isResolved      Boolean  @default(false)
+  resolvedEntryId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([isResolved])
+  @@index([createdAt])
+}
+
+model AiSettings {
+  id        String   @id @default("default")
+  data      Json
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+}
+
+model AiUsageLog {
+  id               String   @id @default(cuid())
+  provider         String
+  model            String
+  promptTokens     Int      @default(0)
+  completionTokens Int      @default(0)
+  totalTokens      Int      @default(0)
+  status           String
+  question         String   @db.Text
+  tourSlug         String?
+  createdAt        DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([provider])
+}

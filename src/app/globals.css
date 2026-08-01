@@ -1018,3 +1018,41 @@ body::after {
 .tour-rich-text .ql-indent-1 { padding-left: 1.5rem; }
 .tour-rich-text .ql-indent-2 { padding-left: 3rem; }
 .tour-rich-text .ql-indent-3 { padding-left: 4.5rem; }
+
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+/* Chat "someone is typing" dots. The long tail after the lift keeps the three
+   dots reading as one wave rather than three separate blinking dots. */
+@keyframes typing-dot {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+.animate-typing-dot {
+  animation: typing-dot 1.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-typing-dot {
+    animation: pulse-soft 1.6s ease-in-out infinite;
+  }
+}

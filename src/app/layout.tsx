@@ -5,6 +5,7 @@ import { createRootSiteMetadata } from '@/lib/metadata';
 import { loadPublicConfigWithFallback } from '@/lib/public-config';
 import { getSiteSeoFromDB } from '@/lib/services/site-seo.service';
 import { Manrope, Pinyon_Script } from 'next/font/google';
+import { Toaster } from 'sonner';
 import './globals.css';
 
 const manrope = Manrope({
@@ -61,6 +62,7 @@ export default async function RootLayout({
           zIndex={99999}
           shadow="0 0 10px #ff3737,0 0 5px #ff3737"
         />
+        <Toaster />
         {children}
       </body>
     </html>

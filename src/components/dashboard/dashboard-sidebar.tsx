@@ -9,6 +9,7 @@ import {
   FaBlog,
   FaCalendarDays,
   FaChartLine,
+  FaComments,
   FaGear,
   FaHouse,
   FaMagnifyingGlass,
@@ -28,6 +29,8 @@ function NavIcon({ icon }: { icon: DashboardNavItem['icon'] }) {
       return <FaCalendarDays className="size-5 shrink-0 md:size-4" aria-hidden="true" />
     case 'chart':
       return <FaChartLine className="size-5 shrink-0 md:size-4" aria-hidden="true" />
+    case 'chat':
+      return <FaComments className="size-5 shrink-0 md:size-4" aria-hidden="true" />
     case 'settings':
       return <FaGear className="size-5 shrink-0 md:size-4" aria-hidden="true" />
     case 'tour':

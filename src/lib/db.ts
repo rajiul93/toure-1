@@ -2,7 +2,7 @@ import { PrismaClient } from '../../generated/prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 
 /** Bump when Prisma schema changes so dev HMR picks up a fresh client. */
-const PRISMA_CLIENT_VERSION = 'attraction-tour-v1'
+const PRISMA_CLIENT_VERSION = 'ai-kb-v1'
 
 type PrismaGlobal = {
   prisma?: PrismaClient
@@ -30,7 +30,11 @@ function isClientReady(client: PrismaClient) {
     typeof client.siteSettings !== 'undefined' &&
     typeof client.tourSettings !== 'undefined' &&
     typeof client.seoSettings !== 'undefined' &&
-    typeof client.attractionTour !== 'undefined'
+    typeof client.attractionTour !== 'undefined' &&
+    typeof client.knowledgeBaseEntry !== 'undefined' &&
+    typeof client.unansweredQuestion !== 'undefined' &&
+    typeof client.aiSettings !== 'undefined' &&
+    typeof client.aiUsageLog !== 'undefined'
   )
 }
 

@@ -1,4 +1,5 @@
 import Footer from '@/components/footer'
+import SiteChatWidget from '@/components/chat/site-chat-widget'
 import { BookingLayoutProvider } from '@/components/booking-layout-context'
 import Navbar from '@/components/navbar'
 import PublicPageShell from '@/components/public-page-shell'
@@ -27,6 +28,7 @@ export default async function PublicLayout({
           </BookingLayoutProvider>
         </main>
         <Footer />
+        <SiteChatWidget />
       </TourConfigProvider>
     </SiteConfigProvider>
   )

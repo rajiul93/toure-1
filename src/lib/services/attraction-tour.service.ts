@@ -300,3 +300,18 @@ export async function softDeleteAttractionTourInDB(id: string) {
     data: { isDeleted: true, isPublished: false },
   })
 }
+
+export type TourSlugOption = { slug: string; title: string; isPublished: boolean }
+
+/**
+ * Slugs that can scope a knowledge-base entry. Unpublished tours are included
+ * so answers can be written before a tour goes live; the home-page (Louvre)
+ * tour is absent by design, since it lives in TourSettings and has no slug.
+ */
+export async function listTourSlugOptionsFromDB(): Promise<TourSlugOption[]> {
+  return prisma.attractionTour.findMany({
+    where: { isDeleted: false },
+    orderBy: { title: 'asc' },
+    select: { slug: true, title: true, isPublished: true },
+  })
+}

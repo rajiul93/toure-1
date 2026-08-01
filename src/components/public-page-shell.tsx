@@ -6,6 +6,7 @@ import {
   BookingTargetProvider,
   type BokunTarget,
 } from '@/components/booking-target-context'
+import { tourSlugFromPath } from '@/lib/tour-path'
 import { usePathname } from 'next/navigation'
 import { useMemo, type ReactNode } from 'react'
 
@@ -18,13 +19,6 @@ const PAGES_WITHOUT_BOOKING = new Set(['/about-us', '/attraction-tours'])
 
 function shouldHideBooking(pathname: string): boolean {
   return PAGES_WITHOUT_BOOKING.has(pathname) || pathname.startsWith('/legal/')
-}
-
-const TOUR_PATH_PREFIX = '/attraction-tours/'
-
-function tourSlugFromPath(pathname: string): string | null {
-  if (!pathname.startsWith(TOUR_PATH_PREFIX)) return null
-  return pathname.slice(TOUR_PATH_PREFIX.length).split('/')[0] || null
 }
 
 /**
